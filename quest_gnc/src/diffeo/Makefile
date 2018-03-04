@@ -1,4 +1,7 @@
-include ../../../../quest_ext_vars.mk
+include ../../../quest_ext_vars.mk
+
+MODULE_DIR = quest_gnc/src/diffeo
+MODULE = $(subst /,,$(MODULE_DIR))
 
 export BUILD_ROOT
 

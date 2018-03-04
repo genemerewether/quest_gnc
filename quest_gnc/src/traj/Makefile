@@ -1,4 +1,4 @@
-include ../../../../quest_ext_vars.mk
+include ../../../quest_ext_vars.mk
 
 export BUILD_ROOT
 
