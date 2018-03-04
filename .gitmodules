@@ -1,6 +1,0 @@
-[submodule "tools/pybind11"]
-	path = tools/pybind11
-	url = https://github.com/wjakob/pybind11.git
-[submodule "tools/linter"]
-	path = tools/linter
-	url = git@github.com:ethz-asl/linter.git
