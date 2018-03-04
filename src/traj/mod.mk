@@ -1,3 +1,3 @@
 SRC =
 
-HDR = # ../include/quest_gnc/diffeo/
+HDR = # ../../include/quest_gnc/diffeo/

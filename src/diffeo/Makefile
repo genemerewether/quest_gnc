@@ -1,4 +1,4 @@
-MODULE_DIR = quest_gnc/src/diffeo
+MODULE_DIR = Gnc/quest_gnc/src/diffeo
 MODULE = $(subst /,,$(MODULE_DIR))
 
 BUILD_ROOT ?= $(subst /$(MODULE_DIR),,$(CURDIR))
