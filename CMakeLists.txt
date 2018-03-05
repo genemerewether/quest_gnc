@@ -27,7 +27,7 @@ if (protobuf_catkin_FOUND)
     list(APPEND catkin_LIBRARIES ${protobuf_catkin_LIBRARIES})
     include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-    PROTOBUF_CATKIN_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${PROTO_DEFNS})
+    #PROTOBUF_CATKIN_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${PROTO_DEFNS})
     set(ADDITIONAL_LIBRARIES ${protobuf_catkin_LIBRARIES})
 else()
   message(STATUS "Using system protobuf")
@@ -35,7 +35,7 @@ else()
   include_directories(${PROTOBUF_INCLUDE_DIRS})
   include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-  PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${PROTO_DEFNS})
+  #PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${PROTO_DEFNS})
   set(ADDITIONAL_LIBRARIES ${PROTOBUF_LIBRARY})
 endif()
 
@@ -44,7 +44,8 @@ endif()
 ####################
 
 set("${PROJECT_NAME}_SRCS"
-  #src/diffeo/
+  src/diffeo/body_frame.cpp
+  src/diffeo/rates.cpp
 )
 
 #############
@@ -59,31 +60,32 @@ set("${PROJECT_NAME}_SRCS"
 
 # Avoid having multiple compiled copies of the same .pb.cc
 # file sharing a single copy of libprotobuf.so
-cs_add_library(${PROJECT_NAME}_proto
-  ${PROTO_SRCS}
-)
-target_link_libraries(${PROJECT_NAME}_proto ${PROTOBUF_LIBRARIES})
+#cs_add_library(${PROJECT_NAME}_proto
+#  ${PROTO_SRCS}
+#)
+#target_link_libraries(${PROJECT_NAME}_proto ${PROTOBUF_LIBRARIES})
 
 cs_add_library(${PROJECT_NAME}
   ${${PROJECT_NAME}_SRCS}
 )
-target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_proto ${PROTOBUF_LIBRARIES})
+#target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_proto ${PROTOBUF_LIBRARIES})
 
 ###################
 # PYTHON BINDINGS #
 ###################
 if(HAVE_PYBIND11)
-  catkin_python_setup()
+  #catkin_python_setup()
 
   add_subdirectory(../tools/pybind11 pybind11)
   message("Building Python bindings for quest_gnc")
   pybind11_add_module(quest_gncpy
     ${${PROJECT_NAME}_SRCS}
-    #src/pybind11/
+    src/pybind11/rates_bind.cc
+    src/pybind11/body_frame_bind.cc
     src/pybind11/bind.cc)
   set_target_properties(quest_gncpy PROPERTIES LINKER_LANGUAGE CXX)
-  target_link_libraries(quest_gncpy PUBLIC ${PROJECT_NAME}_proto
-                                           ${PROTOBUF_LIBRARIES}
+  target_link_libraries(quest_gncpy PUBLIC #${PROJECT_NAME}_proto
+                                           #${PROTOBUF_LIBRARIES}
                                            ${catkin_LIBRARIES})
 
   set_target_properties(quest_gncpy
@@ -114,5 +116,5 @@ endif()
 ##########
 cs_install()
 cs_export(INCLUDE_DIRS include ${CMAKE_CURRENT_BINARY_DIR}
-          CFG_EXTRAS quest_gnc-extras.cmake
+          #CFG_EXTRAS quest_gnc-extras.cmake
           LIBRARIES ${ADDITIONAL_LIBRARIES})
