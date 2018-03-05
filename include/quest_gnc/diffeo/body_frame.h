@@ -4,6 +4,7 @@
 #include <Eigen/Eigen>
 
 namespace quest_gnc {
+namespace multirotor {
 
 class BodyFrame {
   public:
@@ -12,10 +13,21 @@ class BodyFrame {
     BodyFrame();
 
     ~BodyFrame();
+
+    int FromYawAccel(float yaw, const Eigen::Vector3d& accel,
+                     Eigen::Matrix3d& w_R_body);
+
+    // TODO(mereweth) - support 2nd angle, q3, closest axis methods
+
+    // TODO(mereweth) - convenience methods for setting attitude with acceleration waypoint
+
+    // TODO(mereweth) - put angular rate saturation here?
+
+  private:
+    // parameters object
 }; // class BodyFrame
 
-// body frame from thrust vector and 4th flat output
-
+} // namespace multirotor
 } // namespace quest_gnc
 
 #endif // #ifndef QUEST_GNC_DIFFEO_BODY_FRAME_H
