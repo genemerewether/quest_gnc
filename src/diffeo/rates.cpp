@@ -20,7 +20,7 @@ int Rates::
               const Eigen::Matrix3d& w_R_body,
               const Eigen::Vector3d& omega,
               double& pDot,
-              double& qDot) {
+              double& qDot) const {
     Eigen::Vector3d h_alpha = snap - w_R_body.col(2).dot(snap) * w_R_body.col(3)
                               + thrust * w_R_body.col(2).dot(
                                   omega.cross(omega.cross(w_R_body.col(2)))) * w_R_body.col(2)
@@ -38,7 +38,7 @@ int Rates::
 int Rates::
   ProjectYawDerivToBody(double yaw_deriv,
                         const Eigen::Vector3d& zBody_w,
-                        double& body_z_deriv) {
+                        double& body_z_deriv) const {
     body_z_deriv = yaw_deriv * Eigen::Vector3d::UnitZ().dot(zBody_w);
 
     // TODO(mereweth) - return warning code if zBody_w perpendicular to z_w
@@ -50,7 +50,7 @@ int Rates::
         const Eigen::Vector3d& jerk,
         const Eigen::Matrix3d& w_R_body,
         double& p,
-        double& q) {
+        double& q) const {
 
     Eigen::Vector3d h_omega = jerk - w_R_body.col(2).dot(jerk) * w_R_body.col(2);
     h_omega /= thrust;

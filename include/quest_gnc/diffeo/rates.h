@@ -20,21 +20,17 @@ class Rates {
                     const Eigen::Matrix3d& w_R_body,
                     const Eigen::Vector3d& omega,
                     double& pDot,
-                    double& qDot);
-
-    int GetRDot(double yaw_ddot,
-                const Eigen::Vector3d& zBody_w,
-                double& rDot);
+                    double& qDot) const;
 
     int GetPQ(double thrust,
               const Eigen::Vector3d& jerk,
               const Eigen::Matrix3d& w_R_body,
               double& p,
-              double& q);
+              double& q) const;
 
     int ProjectYawDerivToBody(double yaw_deriv,
                               const Eigen::Vector3d& zBody_w,
-                              double& body_z_deriv);
+                              double& body_z_deriv) const;
 
   private:
     // parameters object

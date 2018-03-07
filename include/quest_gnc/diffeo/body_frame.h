@@ -15,7 +15,7 @@ class BodyFrame {
     ~BodyFrame();
 
     int FromYawAccel(float yaw, const Eigen::Vector3d& accel,
-                     Eigen::Matrix3d& w_R_body);
+                     Eigen::Matrix3d& w_R_body) const;
 
     // TODO(mereweth) - support 2nd angle, q3, closest axis methods
 

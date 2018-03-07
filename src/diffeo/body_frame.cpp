@@ -15,7 +15,7 @@ BodyFrame::~BodyFrame() {
 
 int BodyFrame::
   FromYawAccel(float yaw, const Eigen::Vector3d& accel,
-               Eigen::Matrix3d& w_R_body) {
+               Eigen::Matrix3d& w_R_body) const {
     w_R_body.col(2) = accel;
 
     // could switch to normalize() if not using thrust_norm later
