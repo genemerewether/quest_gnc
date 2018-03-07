@@ -15,16 +15,16 @@ class Rates {
     ~Rates();
 
     int GetPDotQDot(double thrust,
-                    const Eigen::Vector3d& jerk,
-                    const Eigen::Vector3d& snap,
-                    const Eigen::Matrix3d& w_R_body,
-                    const Eigen::Vector3d& omega,
+                    const Eigen::Vector3d& jerk_w,
+                    const Eigen::Vector3d& snap_w,
+                    const Eigen::Matrix3d& w_R_b,
+                    const Eigen::Vector3d& omega_b,
                     double& pDot,
                     double& qDot) const;
 
     int GetPQ(double thrust,
-              const Eigen::Vector3d& jerk,
-              const Eigen::Matrix3d& w_R_body,
+              const Eigen::Vector3d& jerk_w,
+              const Eigen::Matrix3d& w_R_b,
               double& p,
               double& q) const;
 
@@ -33,7 +33,7 @@ class Rates {
                               double& body_z_deriv) const;
 
   private:
-    // parameters object
+    // parameters object - warning tolerances, physical parameters
 }; // class Rates
 
 } // namespace multirotor

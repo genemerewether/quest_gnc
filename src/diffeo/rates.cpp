@@ -15,22 +15,22 @@ Rates::~Rates() {
 
 int Rates::
   GetPDotQDot(double thrust,
-              const Eigen::Vector3d& jerk,
-              const Eigen::Vector3d& snap,
-              const Eigen::Matrix3d& w_R_body,
+              const Eigen::Vector3d& jerk_w,
+              const Eigen::Vector3d& snap_w,
+              const Eigen::Matrix3d& w_R_b,
               const Eigen::Vector3d& omega,
               double& pDot,
               double& qDot) const {
-    Eigen::Vector3d h_alpha = snap - w_R_body.col(2).dot(snap) * w_R_body.col(3)
-                              + thrust * w_R_body.col(2).dot(
-                                  omega.cross(omega.cross(w_R_body.col(2)))) * w_R_body.col(2)
-                              - thrust * omega.cross(omega.cross(w_R_body.col(2)))
-                              - 2 * omega.cross(w_R_body.col(2).dot(jerk) * w_R_body.col(2));
+    Eigen::Vector3d h_alpha = snap_w - w_R_b.col(2).dot(snap_w) * w_R_b.col(3)
+                              + thrust * w_R_b.col(2).dot(
+                                  omega.cross(omega.cross(w_R_b.col(2)))) * w_R_b.col(2)
+                              - thrust * omega.cross(omega.cross(w_R_b.col(2)))
+                              - 2 * omega.cross(w_R_b.col(2).dot(jerk_w) * w_R_b.col(2));
 
     h_alpha /= thrust;
 
-    pDot = -1.0 * h_alpha.dot(w_R_body.col(1));
-    qDot = h_alpha.dot(w_R_body.col(0));
+    pDot = -1.0 * h_alpha.dot(w_R_b.col(1));
+    qDot = h_alpha.dot(w_R_b.col(0));
 
     return 0;
 }
@@ -47,16 +47,16 @@ int Rates::
 
 int Rates::
   GetPQ(double thrust,
-        const Eigen::Vector3d& jerk,
-        const Eigen::Matrix3d& w_R_body,
+        const Eigen::Vector3d& jerk_w,
+        const Eigen::Matrix3d& w_R_b,
         double& p,
         double& q) const {
 
-    Eigen::Vector3d h_omega = jerk - w_R_body.col(2).dot(jerk) * w_R_body.col(2);
+    Eigen::Vector3d h_omega = jerk_w - w_R_b.col(2).dot(jerk_w) * w_R_b.col(2);
     h_omega /= thrust;
 
-    p = -1.0 * h_omega.dot(w_R_body.col(1));
-    q = h_omega.dot(w_R_body.col(0));
+    p = -1.0 * h_omega.dot(w_R_b.col(1));
+    q = h_omega.dot(w_R_b.col(0));
 
     return 0;
 }
