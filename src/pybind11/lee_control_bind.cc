@@ -5,9 +5,9 @@
 namespace py = pybind11;
 
 using quest_gnc::multirotor::LeeControl;
-using namespace pybind11::literals;
+using namespace pybind11::literals; // NOLINT()
 
-void lee_control_bind(py::module &m) {
+void lee_control_bind(py::module &m) { // NOLINT()
   py::class_<LeeControl>(m, "LeeControl")
       .def(py::init<>())
       .def("SetOdometry", &LeeControl::SetOdometry,

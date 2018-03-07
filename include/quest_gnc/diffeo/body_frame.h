@@ -27,9 +27,9 @@ class BodyFrame {
 
  private:
     // parameters object - warning tolerances, physical parameters
-}; // class BodyFrame
+}; // class BodyFrame NOLINT()
 
-} // namespace multirotor
-} // namespace quest_gnc
+} // namespace multirotor NOLINT()
+} // namespace quest_gnc NOLINT()
 
 #endif  // QUEST_GNC_INCLUDE_QUEST_GNC_DIFFEO_BODY_FRAME_H_

@@ -73,5 +73,5 @@ int Rates::
     return 0;
 }
 
-} // namespace multirotor
-} // namespace quest_gnc
+} // namespace multirotor NOLINT()
+} // namespace quest_gnc NOLINT()

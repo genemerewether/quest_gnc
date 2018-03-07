@@ -69,9 +69,9 @@ class LeeControl {
     Eigen::Vector3d alpha_b__des;
 
     // parameters object - warning tolerances, physical parameters
-}; // class LeeControl
+}; // class LeeControl NOLINT()
 
-} // namespace multirotor
-} // namespace quest_gnc
+} // namespace multirotor NOLINT()
+} // namespace quest_gnc NOLINT()
 
 #endif  // QUEST_GNC_INCLUDE_QUEST_GNC_CTRL_LEE_CONTROL_H_

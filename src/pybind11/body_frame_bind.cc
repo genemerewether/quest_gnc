@@ -5,9 +5,9 @@
 namespace py = pybind11;
 
 using quest_gnc::multirotor::BodyFrame;
-using namespace pybind11::literals;
+using namespace pybind11::literals; // NOLINT()
 
-void body_frame_bind(py::module &m) {
+void body_frame_bind(py::module &m) { // NOLINT()
   py::class_<BodyFrame>(m, "BodyFrame")
       .def(py::init<>())
       .def("FromYawAccel", &BodyFrame::FromYawAccel,

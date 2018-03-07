@@ -34,9 +34,9 @@ class Rates {
 
  private:
     // parameters object - warning tolerances, physical parameters
-}; // class Rates
+}; // class Rates NOLINT()
 
-} // namespace multirotor
-} // namespace quest_gnc
+} // namespace multirotor NOLINT()
+} // namespace quest_gnc NOLINT()
 
-#endif // QUEST_GNC_INCLUDE_QUEST_GNC_DIFFEO_RATES_H_
+#endif  // QUEST_GNC_INCLUDE_QUEST_GNC_DIFFEO_RATES_H_

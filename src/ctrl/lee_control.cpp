@@ -88,5 +88,5 @@ int LeeControl::
     // TODO(mereweth) - sanitize inputs; return code
 }
 
-} // namespace multirotor
-} // namespace quest_gnc
+} // namespace multirotor NOLINT()
+} // namespace quest_gnc NOLINT()
