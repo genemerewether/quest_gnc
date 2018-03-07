@@ -13,29 +13,29 @@ void rates_bind(py::module &m) {
       .def("GetPDotQDot",
            [](const Rates &r,
               double thrust,
-              const Eigen::Vector3d& jerk,
-              const Eigen::Vector3d& snap,
-              const Eigen::Matrix3d& w_R_body,
-              const Eigen::Vector3d& omega) {
+              const Eigen::Vector3d& jerk_w,
+              const Eigen::Vector3d& snap_w,
+              const Eigen::Matrix3d& w_R_b,
+              const Eigen::Vector3d& omega_b) {
                    double pDot = 0.0f;
                    double qDot = 0.0f;
-                   int stat = r.GetPDotQDot(thrust, jerk, snap, w_R_body, omega,
+                   int stat = r.GetPDotQDot(thrust, jerk_w, snap_w, w_R_b, omega_b,
                                             pDot, qDot);
                    return std::make_tuple(pDot, qDot, stat);
            },
-           "thrust"_a, "jerk"_a, "snap"_a, "w_R_body"_a, "omega"_a)
+           "thrust"_a, "jerk_w"_a, "snap_w"_a, "w_R_b"_a, "omega_b"_a)
       .def("GetPQ",
            [](const Rates &r,
               double thrust,
-              const Eigen::Vector3d& jerk,
-              const Eigen::Matrix3d& w_R_body) {
+              const Eigen::Vector3d& jerk_w,
+              const Eigen::Matrix3d& w_R_b) {
                    double p = 0.0f;
                    double q = 0.0f;
-                   int stat = r.GetPQ(thrust, jerk, w_R_body,
+                   int stat = r.GetPQ(thrust, jerk_w, w_R_b,
                                       p, q);
                    return std::make_tuple(p, q, stat);
            },
-           "thrust"_a, "jerk"_a, "w_R_body"_a)
+           "thrust"_a, "jerk_w"_a, "w_R_b"_a)
       .def("ProjectYawDerivToBody",
            [](const Rates &r,
               double yaw_deriv,
