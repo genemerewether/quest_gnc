@@ -11,5 +11,5 @@ void body_frame_bind(py::module &m) {
   py::class_<BodyFrame>(m, "BodyFrame")
       .def(py::init<>())
       .def("FromYawAccel", &BodyFrame::FromYawAccel,
-           "yaw"_a, "accel"_a, "w_R_body"_a);
+           "yaw"_a, "accel_w"_a, "w_R_body"_a);
 }

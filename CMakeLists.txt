@@ -46,6 +46,7 @@ endif()
 set("${PROJECT_NAME}_SRCS"
   src/diffeo/body_frame.cpp
   src/diffeo/rates.cpp
+  src/ctrl/lee_control.cpp
 )
 
 #############
@@ -82,6 +83,7 @@ if(HAVE_PYBIND11)
     ${${PROJECT_NAME}_SRCS}
     src/pybind11/rates_bind.cc
     src/pybind11/body_frame_bind.cc
+    src/pybind11/lee_control_bind.cc
     src/pybind11/bind.cc)
   set_target_properties(quest_gncpy PROPERTIES LINKER_LANGUAGE CXX)
   target_link_libraries(quest_gncpy PUBLIC #${PROJECT_NAME}_proto
