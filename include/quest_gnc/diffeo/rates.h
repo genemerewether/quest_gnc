@@ -34,7 +34,6 @@ class Rates {
 
  private:
     // parameters object - warning tolerances, physical parameters
-
 }; // class Rates
 
 } // namespace multirotor

@@ -37,8 +37,7 @@ class LeeControl {
                                const Eigen::Vector3d& omega_b__des,
                                const Eigen::Vector3d& alpha_b__des);
 
-  private:
-
+ private:
     // Odometry
 
     Eigen::Vector3d x_w;
@@ -70,7 +69,6 @@ class LeeControl {
     Eigen::Vector3d alpha_b__des;
 
     // parameters object - warning tolerances, physical parameters
-
 }; // class LeeControl
 
 } // namespace multirotor

@@ -27,7 +27,6 @@ class BodyFrame {
 
  private:
     // parameters object - warning tolerances, physical parameters
-
 }; // class BodyFrame
 
 } // namespace multirotor
