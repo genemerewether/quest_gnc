@@ -1,4 +1,4 @@
-#include "../../include/quest_gnc/diffeo/rates.h"
+#include "quest_gnc/diffeo/rates.h"
 
 #include "Eigen/Geometry"
 

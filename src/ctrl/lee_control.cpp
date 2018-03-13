@@ -1,4 +1,4 @@
-#include "../../include/quest_gnc/ctrl/lee_control.h"
+#include "quest_gnc/ctrl/lee_control.h"
 
 #include "Eigen/Geometry"
 
@@ -9,12 +9,103 @@
 namespace quest_gnc {
 namespace multirotor {
 
-LeeControl::LeeControl() {
-    // TODO(mereweth)
+LeeControl::LeeControl(const Eigen::Vector3d& k_x,
+                       const Eigen::Vector3d& k_v,
+                       const Eigen::Vector3d& k_R,
+                       const Eigen::Vector3d& k_omega,
+                       MultirotorModel mrModel,
+                       WorldParams wParams) :
+    k_x(k_x), k_v(k_v),
+    k_R(k_R), k_omega(k_omega),
+    mrModel(mrModel),
+    invMass(1.0f),
+    inertia(Eigen::Matrix3d::Identity()),
+    wParams(wParams),
+    x_w(0, 0, 0), w_R_b(Eigen::Matrix3d::Identity()),
+    v_b(0, 0, 0), omega_b(0, 0, 0),
+    x_w__des(0, 0, 0), v_w__des(0, 0, 0), a_w__des(0, 0, 0),
+    w_R_b__des(Eigen::Matrix3d::Identity()),
+    omega_b__des(0, 0, 0), alpha_b__des(0, 0, 0),
+    bodyFrame(),
+    rates() {
+    // TODO(mereweth) - store smallnum as parameter
+    FW_ASSERT(this->mrModel.mass > 1e-6);
+    this->invMass = 1.0f / this->mrModel.mass;
+
+    this->inertia(0, 0) = this->mrModel.Ixx;
+    this->inertia(1, 1) = this->mrModel.Iyy;
+    this->inertia(2, 2) = this->mrModel.Izz;
+
+    this->inertia(0, 1) = this->mrModel.Ixy;
+    this->inertia(1, 0) = this->mrModel.Ixy;
+    this->inertia(0, 2) = this->mrModel.Ixz;
+    this->inertia(2, 0) = this->mrModel.Ixz;
+    this->inertia(1, 2) = this->mrModel.Iyz;
+    this->inertia(2, 1) = this->mrModel.Iyz;
 }
 
 LeeControl::~LeeControl() {
     // TODO(mereweth)
+}
+
+int LeeControl::
+  GetAccelAngAccelCommand(Eigen::Vector3d* a_w__comm,
+                          Eigen::Vector3d* alpha_b__comm) {
+    FW_ASSERT(a_w__comm);
+    FW_ASSERT(alpha_b__comm);
+
+    // TODO(mereweth) - flag for missing odometry or setpoint
+
+    const Eigen::Vector3d x_w__err = this->x_w__des - this->x_w;
+
+    // NOTE(mereweth) - sensitive to orientation estimate and map alignment
+    const Eigen::Vector3d v_w__err = this->v_w__des - this->w_R_b * this->v_b;
+
+    *a_w__comm = (x_w__err.cwiseProduct(this->k_x)
+                  + v_w__err.cwiseProduct(this->k_v)) * invMass;
+                  + wParams.gravityMag * Eigen::Vector3d::UnitZ()
+                  + this->a_w__des;
+
+    // TODO(mereweth) - check return value
+    (void) this->bodyFrame.FromYawAccel(yaw_des, *a_w__comm, &this->w_R_b__des);
+
+    (void) GetAngAccelCommand(alpha_b__comm);
+
+    return 0;
+}
+
+int LeeControl::
+  GetAngAccelCommand(Eigen::Vector3d* alpha_b__comm) {
+    FW_ASSERT(alpha_b__comm);
+
+    // TODO(mereweth) - check skew-symmetric, refactor vee operator as util
+    const Eigen::Matrix3d e_R__hat = 0.5 * (this->w_R_b.transpose()
+                                            * this->w_R_b__des
+                                            - this->w_R_b__des.transpose()
+                                            * this->w_R_b);
+    const Eigen::Vector3d e_R(e_R__hat(2, 1), e_R__hat(0, 2), e_R__hat(1, 0));
+
+    const Eigen::Vector3d e_omega = this->w_R_b.transpose() * this->w_R_b__des
+                                    * this->omega_b__des - this->omega_b;
+
+    // TODO(mereweth) - refactor hat operator as util
+    Eigen::Matrix3d omega_b__hat;
+    omega_b__hat << 0, -this->omega_b.z(), this->omega_b.y(),
+                    this->omega_b.z(), 0, -this->omega_b.x(),
+                    -this->omega_b.y(), this->omega_b.x(), 0;
+    *alpha_b__comm = e_R.cwiseProduct(this->k_R)
+                     + e_omega.cwiseProduct(this->k_omega)
+                     + this->omega_b.cross(this->inertia * this->omega_b)
+                     - this->inertia * (omega_b__hat * this->w_R_b.transpose()
+                                        * this->w_R_b__des * this->omega_b__des
+                                        - this->w_R_b.transpose()
+                                          * this->w_R_b__des
+                                          * this->alpha_b__des);
+    // TODO(mereweth) - check that alpha_b__des == omega_b__des__dot
+
+    return 0;
+
+    // TODO(mereweth) - sanitize inputs; return code
 }
 
 int LeeControl::
@@ -23,7 +114,7 @@ int LeeControl::
               const Eigen::Vector3d& v_b,
               const Eigen::Vector3d& omega_b) {
     this->x_w = x_w;
-    this->w_q_b = w_q_b;
+    this->w_R_b = w_q_b.toRotationMatrix();;
     this->v_b = v_b;
     this->omega_b = omega_b;
     return 0;
@@ -44,12 +135,8 @@ int LeeControl::
 }
 
 int LeeControl::
-  SetPositionAngAccelDes(const Eigen::Vector3d& x_w__des,
-                         const Eigen::Vector3d& v_w__des,
-                         const Eigen::Vector3d& alpha_b__des) {
-    this->x_w__des = x_w__des;
-    this->v_w__des = v_w__des;
-    this->alpha_b__des = alpha_b__des;
+  SetYawDes(double yaw_des) {
+    this->yaw_des = yaw_des;
     return 0;
 
     // TODO(mereweth) - sanitize inputs; return code
@@ -68,20 +155,31 @@ int LeeControl::
 int LeeControl::
   SetAttitudeDes(const Eigen::Quaterniond& w_q_b__des,
                  const Eigen::Vector3d& omega_b__des) {
-    this->w_q_b__des = w_q_b__des;
+    this->w_R_b__des = w_q_b__des.toRotationMatrix();
     this->omega_b__des = omega_b__des;
     return 0;
 
     // TODO(mereweth) - sanitize inputs; return code
 }
 
-
 int LeeControl::
   SetAttitudeAngAccelDes(const Eigen::Quaterniond& w_q_b__des,
                          const Eigen::Vector3d& omega_b__des,
                          const Eigen::Vector3d& alpha_b__des) {
-    this->w_q_b__des = w_q_b__des;
+    this->w_R_b__des = w_q_b__des.toRotationMatrix();
     this->omega_b__des = omega_b__des;
+    this->alpha_b__des = alpha_b__des;
+    return 0;
+
+    // TODO(mereweth) - sanitize inputs; return code
+}
+
+int LeeControl::
+  SetPositionAngAccelDes(const Eigen::Vector3d& x_w__des,
+                         const Eigen::Vector3d& v_w__des,
+                         const Eigen::Vector3d& alpha_b__des) {
+    this->x_w__des = x_w__des;
+    this->v_w__des = v_w__des;
     this->alpha_b__des = alpha_b__des;
     return 0;
 

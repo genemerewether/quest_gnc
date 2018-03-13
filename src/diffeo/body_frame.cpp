@@ -1,4 +1,4 @@
-#include "../../include/quest_gnc/diffeo/body_frame.h"
+#include "quest_gnc/diffeo/body_frame.h"
 
 #include "Eigen/Geometry"
 
