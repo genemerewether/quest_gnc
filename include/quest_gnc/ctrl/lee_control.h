@@ -15,6 +15,8 @@ class LeeControl {
  public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+    LeeControl();
+
     LeeControl(const Eigen::Vector3d& k_x,
                const Eigen::Vector3d& k_v,
                const Eigen::Vector3d& k_R,

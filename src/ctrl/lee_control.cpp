@@ -9,6 +9,22 @@
 namespace quest_gnc {
 namespace multirotor {
 
+LeeControl::LeeControl() :
+    k_x(0, 0, 0), k_v(0, 0, 0),
+    k_R(0, 0, 0), k_omega(0, 0, 0),
+    mrModel(),
+    invMass(1.0f),
+    inertia(Eigen::Matrix3d::Identity()),
+    wParams(),
+    x_w(0, 0, 0), w_R_b(Eigen::Matrix3d::Identity()),
+    v_b(0, 0, 0), omega_b(0, 0, 0),
+    x_w__des(0, 0, 0), v_w__des(0, 0, 0), a_w__des(0, 0, 0),
+    w_R_b__des(Eigen::Matrix3d::Identity()),
+    omega_b__des(0, 0, 0), alpha_b__des(0, 0, 0),
+    bodyFrame(),
+    rates() {
+}
+
 LeeControl::LeeControl(const Eigen::Vector3d& k_x,
                        const Eigen::Vector3d& k_v,
                        const Eigen::Vector3d& k_R,
