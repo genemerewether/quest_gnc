@@ -13,8 +13,8 @@
     <import_port_type>ROS/Gen/nav_msgs/Ports/OdometryPortAi.xml</import_port_type>
     <import_port_type>ROS/Gen/mav_msgs/Ports/TorqueThrustPortAi.xml</import_port_type>
 
-    <!--import_dictionary>Gnc/quest_gnc/src/comp/LeeCtrl/Telemetry.xml</import_dictionary>
-    <import_dictionary>Gnc/quest_gnc/src/comp/LeeCtrl/Events.xml</import_dictionary-->
+    <import_dictionary>Gnc/quest_gnc/src/comp/LeeCtrl/Telemetry.xml</import_dictionary>
+    <import_dictionary>Gnc/quest_gnc/src/comp/LeeCtrl/Events.xml</import_dictionary>
 
     <ports>
         <port name="odometry" data_type="ROS::nav_msgs::Odometry"  kind="sync_input" max_number="1">

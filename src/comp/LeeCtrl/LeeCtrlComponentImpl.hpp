@@ -89,6 +89,10 @@ namespace Gnc {
       // Handler implementations for user-defined typed input ports
       // ----------------------------------------------------------------------
 
+      U32 seq;
+
+      ROS::geometry_msgs::Quaternion w_q_b;
+
       quest_gnc::multirotor::LeeControl leeControl;
 
     };
