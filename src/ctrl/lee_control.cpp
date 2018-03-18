@@ -25,29 +25,16 @@ LeeControl::LeeControl() :
     rates() {
 }
 
-LeeControl::LeeControl(const Eigen::Vector3d& k_x,
-                       const Eigen::Vector3d& k_v,
-                       const Eigen::Vector3d& k_R,
-                       const Eigen::Vector3d& k_omega,
-                       MultirotorModel mrModel,
-                       WorldParams wParams) :
-    k_x(k_x), k_v(k_v),
-    k_R(k_R), k_omega(k_omega),
-    mrModel(mrModel),
-    invMass(1.0f),
-    inertia(Eigen::Matrix3d::Identity()),
-    wParams(wParams),
-    x_w(0, 0, 0), w_R_b(Eigen::Matrix3d::Identity()),
-    v_b(0, 0, 0), omega_b(0, 0, 0),
-    x_w__des(0, 0, 0), v_w__des(0, 0, 0), a_w__des(0, 0, 0),
-    w_R_b__des(Eigen::Matrix3d::Identity()),
-    omega_b__des(0, 0, 0), alpha_b__des(0, 0, 0),
-    bodyFrame(),
-    rates() {
-    // TODO(mereweth) - store smallnum as parameter
-    FW_ASSERT(this->mrModel.mass > 1e-6);
-    this->invMass = 1.0f / this->mrModel.mass;
+LeeControl::~LeeControl() {
+    // TODO(mereweth)
+}
 
+// ----------------------------------------------------------------------
+// Parameter, model, and gain setters
+// ----------------------------------------------------------------------
+
+int LeeControl::
+  SetWorldParams(WorldParams wParams) {
     this->inertia(0, 0) = this->mrModel.Ixx;
     this->inertia(1, 1) = this->mrModel.Iyy;
     this->inertia(2, 2) = this->mrModel.Izz;
@@ -58,10 +45,34 @@ LeeControl::LeeControl(const Eigen::Vector3d& k_x,
     this->inertia(2, 0) = this->mrModel.Ixz;
     this->inertia(1, 2) = this->mrModel.Iyz;
     this->inertia(2, 1) = this->mrModel.Iyz;
+
+    return 0;
 }
 
-LeeControl::~LeeControl() {
-    // TODO(mereweth)
+int LeeControl::
+  SetModel(MultirotorModel mrModel) {
+    // TODO(mereweth) - store smallnum as parameter
+    // TODO(mereweth) - use return code here instead of assert?
+    FW_ASSERT(this->mrModel.mass > 1e-6);
+    this->invMass = 1.0f / this->mrModel.mass;
+
+    this->mrModel = mrModel;
+    return 0;
+}
+
+int LeeControl::
+  SetGains(const Eigen::Vector3d& k_x,
+           const Eigen::Vector3d& k_v,
+           const Eigen::Vector3d& k_R,
+           const Eigen::Vector3d& k_omega) {
+    // TODO(mereweth) - check all positive
+
+    this->k_x = k_x;
+    this->k_v = k_v;
+    this->k_R = k_R;
+    this->k_omega = k_omega;
+
+    return 0;
 }
 
 // ----------------------------------------------------------------------
@@ -92,6 +103,7 @@ int LeeControl::
     // NOTE(mereweth) - sensitive to orientation estimate and map alignment
     const Eigen::Vector3d v_w__err = this->v_w__des - this->w_R_b * this->v_b;
 
+    // TODO(mereweth) remove invMass here and make gains account for mass?
     *a_w__comm = (x_w__err.cwiseProduct(this->k_x)
                   + v_w__err.cwiseProduct(this->k_v)) * invMass;
                   + wParams.gravityMag * Eigen::Vector3d::UnitZ()

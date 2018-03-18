@@ -27,6 +27,19 @@ class LeeControl {
     ~LeeControl();
 
   // ----------------------------------------------------------------------
+  // Parameter, model, and gain setters
+  // ----------------------------------------------------------------------
+
+    int SetWorldParams(WorldParams wParams);
+
+    int SetModel(MultirotorModel mrModel);
+
+    int SetGains(const Eigen::Vector3d& k_x,
+                 const Eigen::Vector3d& k_v,
+                 const Eigen::Vector3d& k_R,
+                 const Eigen::Vector3d& k_omega);
+
+  // ----------------------------------------------------------------------
   // Thrust and moment getters
   // ----------------------------------------------------------------------
 

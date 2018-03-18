@@ -11,9 +11,16 @@ using namespace pybind11::literals; // NOLINT()
 
 void lee_control_bind(py::module &m) { // NOLINT()
   py::class_<LeeControl>(m, "LeeControl")
-      .def(py::init<const Eigen::Vector3d&, const Eigen::Vector3d&,
-                    const Eigen::Vector3d&, const Eigen::Vector3d&,
-                    MultirotorModel, WorldParams>())
+      .def(py::init<>())
+
+// ----------------------------------------------------------------------
+// Parameter, model, and gain setters
+// ----------------------------------------------------------------------
+
+      .def("SetWorldParams", &LeeControl::SetWorldParams, "wParams"_a)
+      .def("SetModel", &LeeControl::SetModel, "mrModel"_a)
+      .def("SetGains", &LeeControl::SetGains,
+           "k_x"_a, "k_v"_a, "k_R"_a, "k_omega"_a)
 
 // ----------------------------------------------------------------------
 // Thrust and moment getters
