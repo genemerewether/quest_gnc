@@ -9,6 +9,22 @@
 namespace quest_gnc {
 namespace multirotor {
 
+LeeControl::LeeControl() :
+    k_x(0, 0, 0), k_v(0, 0, 0),
+    k_R(0, 0, 0), k_omega(0, 0, 0),
+    mrModel(),
+    invMass(1.0f),
+    inertia(Eigen::Matrix3d::Identity()),
+    wParams(),
+    x_w(0, 0, 0), w_R_b(Eigen::Matrix3d::Identity()),
+    v_b(0, 0, 0), omega_b(0, 0, 0),
+    x_w__des(0, 0, 0), v_w__des(0, 0, 0), a_w__des(0, 0, 0),
+    w_R_b__des(Eigen::Matrix3d::Identity()),
+    omega_b__des(0, 0, 0), alpha_b__des(0, 0, 0),
+    bodyFrame(),
+    rates() {
+}
+
 LeeControl::LeeControl(const Eigen::Vector3d& k_x,
                        const Eigen::Vector3d& k_v,
                        const Eigen::Vector3d& k_R,
@@ -47,6 +63,10 @@ LeeControl::LeeControl(const Eigen::Vector3d& k_x,
 LeeControl::~LeeControl() {
     // TODO(mereweth)
 }
+
+// ----------------------------------------------------------------------
+// Thrust and moment getters
+// ----------------------------------------------------------------------
 
 int LeeControl::
   GetAccelAngAccelCommand(Eigen::Vector3d* a_w__comm,
@@ -108,19 +128,47 @@ int LeeControl::
     // TODO(mereweth) - sanitize inputs; return code
 }
 
+// ----------------------------------------------------------------------
+// Feedback setters
+// ----------------------------------------------------------------------
+
 int LeeControl::
   SetOdometry(const Eigen::Vector3d& x_w,
               const Eigen::Quaterniond& w_q_b,
               const Eigen::Vector3d& v_b,
               const Eigen::Vector3d& omega_b) {
     this->x_w = x_w;
-    this->w_R_b = w_q_b.toRotationMatrix();;
+    this->w_R_b = w_q_b.toRotationMatrix();
     this->v_b = v_b;
     this->omega_b = omega_b;
     return 0;
 
     // TODO(mereweth) - sanitize inputs; return code
 }
+
+int LeeControl::
+  SetAttitudeAngVel(const Eigen::Quaterniond& w_q_b,
+                    const Eigen::Vector3d& omega_b) {
+    this->w_R_b = w_q_b.toRotationMatrix();
+    this->omega_b = omega_b;
+    return 0;
+
+    // TODO(mereweth) - sanitize inputs; return code
+}
+
+int LeeControl::
+  SetPositionLinVel(const Eigen::Vector3d& x_w,
+                    const Eigen::Vector3d& v_b) {
+    this->x_w = x_w;
+    this->v_b = v_b;
+    return 0;
+
+    // TODO(mereweth) - sanitize inputs; return code
+}
+
+// ----------------------------------------------------------------------
+// Command setters
+// ----------------------------------------------------------------------
 
 int LeeControl::
   SetPositionDes(const Eigen::Vector3d& x_w__des,

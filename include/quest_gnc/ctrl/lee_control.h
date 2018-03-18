@@ -15,6 +15,8 @@ class LeeControl {
  public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+    LeeControl();
+
     LeeControl(const Eigen::Vector3d& k_x,
                const Eigen::Vector3d& k_v,
                const Eigen::Vector3d& k_R,
@@ -43,6 +45,12 @@ class LeeControl {
                     const Eigen::Quaterniond& w_q_b,
                     const Eigen::Vector3d& v_b,
                     const Eigen::Vector3d& omega_b);
+
+    int SetAttitudeAngVel(const Eigen::Quaterniond& w_q_b,
+                          const Eigen::Vector3d& omega_b);
+
+    int SetPositionLinVel(const Eigen::Vector3d& x_w,
+                          const Eigen::Vector3d& v_b);
 
   // ----------------------------------------------------------------------
   // Command setters
