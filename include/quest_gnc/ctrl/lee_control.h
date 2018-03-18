@@ -46,6 +46,12 @@ class LeeControl {
                     const Eigen::Vector3d& v_b,
                     const Eigen::Vector3d& omega_b);
 
+    int SetAttitudeAngVel(const Eigen::Quaterniond& w_q_b,
+                          const Eigen::Vector3d& omega_b);
+
+    int SetPositionLinVel(const Eigen::Vector3d& x_w,
+                          const Eigen::Vector3d& v_b);
+
   // ----------------------------------------------------------------------
   // Command setters
   // ----------------------------------------------------------------------

@@ -64,6 +64,10 @@ LeeControl::~LeeControl() {
     // TODO(mereweth)
 }
 
+// ----------------------------------------------------------------------
+// Thrust and moment getters
+// ----------------------------------------------------------------------
+
 int LeeControl::
   GetAccelAngAccelCommand(Eigen::Vector3d* a_w__comm,
                           Eigen::Vector3d* alpha_b__comm) {
@@ -124,19 +128,47 @@ int LeeControl::
     // TODO(mereweth) - sanitize inputs; return code
 }
 
+// ----------------------------------------------------------------------
+// Feedback setters
+// ----------------------------------------------------------------------
+
 int LeeControl::
   SetOdometry(const Eigen::Vector3d& x_w,
               const Eigen::Quaterniond& w_q_b,
               const Eigen::Vector3d& v_b,
               const Eigen::Vector3d& omega_b) {
     this->x_w = x_w;
-    this->w_R_b = w_q_b.toRotationMatrix();;
+    this->w_R_b = w_q_b.toRotationMatrix();
     this->v_b = v_b;
     this->omega_b = omega_b;
     return 0;
 
     // TODO(mereweth) - sanitize inputs; return code
 }
+
+int LeeControl::
+  SetAttitudeAngVel(const Eigen::Quaterniond& w_q_b,
+                    const Eigen::Vector3d& omega_b) {
+    this->w_R_b = w_q_b.toRotationMatrix();
+    this->omega_b = omega_b;
+    return 0;
+
+    // TODO(mereweth) - sanitize inputs; return code
+}
+
+int LeeControl::
+  SetPositionLinVel(const Eigen::Vector3d& x_w,
+                    const Eigen::Vector3d& v_b) {
+    this->x_w = x_w;
+    this->v_b = v_b;
+    return 0;
+
+    // TODO(mereweth) - sanitize inputs; return code
+}
+
+// ----------------------------------------------------------------------
+// Command setters
+// ----------------------------------------------------------------------
 
 int LeeControl::
   SetPositionDes(const Eigen::Vector3d& x_w__des,
