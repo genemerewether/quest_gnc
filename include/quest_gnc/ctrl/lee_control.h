@@ -30,11 +30,11 @@ class LeeControl {
   // Thrust and moment getters
   // ----------------------------------------------------------------------
 
-    // Valid in position and velocity mode
     int GetAccelAngAccelCommand(Eigen::Vector3d* a_w__comm,
                                 Eigen::Vector3d* alpha_b__comm);
 
-    // Valid in attitude mode
+    int GetAccelCommand(Eigen::Vector3d* a_w__comm);
+
     int GetAngAccelCommand(Eigen::Vector3d* alpha_b__comm);
 
   // ----------------------------------------------------------------------

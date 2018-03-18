@@ -74,6 +74,17 @@ int LeeControl::
     FW_ASSERT(a_w__comm);
     FW_ASSERT(alpha_b__comm);
 
+    (void) GetAccelCommand(a_w__comm);
+
+    (void) GetAngAccelCommand(alpha_b__comm);
+
+    return 0;
+}
+
+int LeeControl::
+  GetAccelCommand(Eigen::Vector3d* a_w__comm) {
+    FW_ASSERT(a_w__comm);
+
     // TODO(mereweth) - flag for missing odometry or setpoint
 
     const Eigen::Vector3d x_w__err = this->x_w__des - this->x_w;
@@ -88,8 +99,6 @@ int LeeControl::
 
     // TODO(mereweth) - check return value
     (void) this->bodyFrame.FromYawAccel(yaw_des, *a_w__comm, &this->w_R_b__des);
-
-    (void) GetAngAccelCommand(alpha_b__comm);
 
     return 0;
 }

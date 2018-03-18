@@ -21,6 +21,8 @@ void lee_control_bind(py::module &m) { // NOLINT()
 
       .def("GetAccelAngAccelCommand", &LeeControl::GetAccelAngAccelCommand,
            "a_w__comm"_a, "alpha_b__comm"_a)
+      .def("GetAccelCommand", &LeeControl::GetAccelCommand,
+           "a_w__comm"_a)
       .def("GetAngAccelCommand", &LeeControl::GetAngAccelCommand,
            "alpha_b__comm"_a)
 
