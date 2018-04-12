@@ -56,7 +56,7 @@ int LeeControl::
     FW_ASSERT(mrModel.mass > 1e-6);
     this->mrModel = mrModel;
 
-    this->invMass = 1.0f / this->mrModel.mass;
+    this->invMass = static_cast<double>(1.0f) / this->mrModel.mass;
 
     return 0;
 }
