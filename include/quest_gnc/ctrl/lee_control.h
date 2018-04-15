@@ -8,6 +8,8 @@
 #include "quest_gnc/utils/multirotor_model.h"
 #include "quest_gnc/utils/world_params.h"
 
+#include "quest_gnc/utils/common.h"
+
 namespace quest_gnc {
 namespace multirotor {
 
@@ -17,10 +19,10 @@ class LeeControl {
 
     LeeControl();
 
-    LeeControl(const Eigen::Vector3d& k_x,
-               const Eigen::Vector3d& k_v,
-               const Eigen::Vector3d& k_R,
-               const Eigen::Vector3d& k_omega,
+    LeeControl(const Vector3& k_x,
+               const Vector3& k_v,
+               const Vector3& k_R,
+               const Vector3& k_omega,
                MultirotorModel mrModel,
                WorldParams wParams);
 
@@ -34,108 +36,108 @@ class LeeControl {
 
     int SetModel(MultirotorModel mrModel);
 
-    int SetGains(const Eigen::Vector3d& k_x,
-                 const Eigen::Vector3d& k_v,
-                 const Eigen::Vector3d& k_R,
-                 const Eigen::Vector3d& k_omega);
+    int SetGains(const Vector3& k_x,
+                 const Vector3& k_v,
+                 const Vector3& k_R,
+                 const Vector3& k_omega);
 
   // ----------------------------------------------------------------------
   // Thrust and moment getters
   // ----------------------------------------------------------------------
 
-    int GetAccelAngAccelCommand(Eigen::Vector3d* a_w__comm,
-                                Eigen::Vector3d* alpha_b__comm);
+    int GetAccelAngAccelCommand(Vector3* a_w__comm,
+                                Vector3* alpha_b__comm);
 
-    int GetAccelCommand(Eigen::Vector3d* a_w__comm);
+    int GetAccelCommand(Vector3* a_w__comm);
 
-    int GetAngAccelCommand(Eigen::Vector3d* alpha_b__comm);
+    int GetAngAccelCommand(Vector3* alpha_b__comm);
 
   // ----------------------------------------------------------------------
   // Feedback setters
   // ----------------------------------------------------------------------
 
-    int SetOdometry(const Eigen::Vector3d& x_w,
-                    const Eigen::Quaterniond& w_q_b,
-                    const Eigen::Vector3d& v_b,
-                    const Eigen::Vector3d& omega_b);
+    int SetOdometry(const Vector3& x_w,
+                    const Quaternion& w_q_b,
+                    const Vector3& v_b,
+                    const Vector3& omega_b);
 
-    int SetAttitudeAngVel(const Eigen::Quaterniond& w_q_b,
-                          const Eigen::Vector3d& omega_b);
+    int SetAttitudeAngVel(const Quaternion& w_q_b,
+                          const Vector3& omega_b);
 
-    int SetPositionLinVel(const Eigen::Vector3d& x_w,
-                          const Eigen::Vector3d& v_b);
+    int SetPositionLinVel(const Vector3& x_w,
+                          const Vector3& v_b);
 
   // ----------------------------------------------------------------------
   // Command setters
   // ----------------------------------------------------------------------
 
-    int SetPositionDes(const Eigen::Vector3d& x_w__des,
-                       const Eigen::Vector3d& v_w__des,
-                       const Eigen::Vector3d& a_w__des);
+    int SetPositionDes(const Vector3& x_w__des,
+                       const Vector3& v_w__des,
+                       const Vector3& a_w__des);
 
-    int SetVelocityDes(const Eigen::Vector3d& v_w__des,
-                       const Eigen::Vector3d& a_w__des);
+    int SetVelocityDes(const Vector3& v_w__des,
+                       const Vector3& a_w__des);
 
-    int SetYawDes(double yaw_des);
+    int SetYawDes(FloatingPoint yaw_des);
 
-    int SetAttitudeDes(const Eigen::Quaterniond& w_q_b__des,
-                       const Eigen::Vector3d& omega_b__des);
+    int SetAttitudeDes(const Quaternion& w_q_b__des,
+                       const Vector3& omega_b__des);
 
-    int SetAttitudeAngAccelDes(const Eigen::Quaterniond& w_q_b__des,
-                               const Eigen::Vector3d& omega_b__des,
-                               const Eigen::Vector3d& alpha_b__des);
+    int SetAttitudeAngAccelDes(const Quaternion& w_q_b__des,
+                               const Vector3& omega_b__des,
+                               const Vector3& alpha_b__des);
 
-    int SetPositionAngAccelDes(const Eigen::Vector3d& x_w__des,
-                               const Eigen::Vector3d& v_w__des,
-                               const Eigen::Vector3d& alpha_b__des);
+    int SetPositionAngAccelDes(const Vector3& x_w__des,
+                               const Vector3& v_w__des,
+                               const Vector3& alpha_b__des);
 
  private:
     // Parameters
-    Eigen::Vector3d k_x;
-    Eigen::Vector3d k_v;
+    Vector3 k_x;
+    Vector3 k_v;
 
-    Eigen::Vector3d k_R;
-    Eigen::Vector3d k_omega;
+    Vector3 k_R;
+    Vector3 k_omega;
 
     MultirotorModel mrModel;
 
-    double invMass;
-    Eigen::Matrix3d inertia;
+    FloatingPoint invMass;
+    Matrix3 inertia;
 
     WorldParams wParams;
 
     // Odometry
 
-    Eigen::Vector3d x_w;
+    Vector3 x_w;
 
-    Eigen::Matrix3d w_R_b;
+    Matrix3 w_R_b;
 
-    Eigen::Vector3d v_b;
+    Vector3 v_b;
 
-    Eigen::Vector3d omega_b;
+    Vector3 omega_b;
 
     // Commanded
 
     //! position mode only
-    Eigen::Vector3d x_w__des;
+    Vector3 x_w__des;
 
     //! position/velocity modes only
-    Eigen::Vector3d v_w__des;
+    Vector3 v_w__des;
 
     //! position/velocity modes only
-    Eigen::Vector3d a_w__des;
+    Vector3 a_w__des;
 
     //! position/velocity modes only
-    double yaw_des;
+    FloatingPoint yaw_des;
 
     //! explicitly set in attitude mode only
-    Eigen::Matrix3d w_R_b__des;
+    Matrix3 w_R_b__des;
 
     //! explicitly set in attitude mode only
-    Eigen::Vector3d omega_b__des;
+    Vector3 omega_b__des;
 
     //! explicitly set in angular acceleration feedforward mode only
-    Eigen::Vector3d alpha_b__des;
+    Vector3 alpha_b__des;
 
     // Math implementations
     BodyFrame bodyFrame;

@@ -18,16 +18,16 @@ BodyFrame::~BodyFrame() {
 }
 
 int BodyFrame::
-  FromYawAccel(float yaw, const Eigen::Vector3d& accel_w,
-               Eigen::Matrix3d* w_R_b) const {
+  FromYawAccel(float yaw, const Vector3& accel_w,
+               Matrix3* w_R_b) const {
     FW_ASSERT(w_R_b);
     w_R_b->col(2) = accel_w;
 
     // could switch to normalize() if not using thrust_norm later
-    const double thrust_norm = w_R_b->col(2).norm();
+    const FloatingPoint thrust_norm = w_R_b->col(2).norm();
     w_R_b->col(2) /= thrust_norm;
 
-    Eigen::Vector3d x_c(cos(yaw), sin(yaw), 0);
+    Vector3 x_c(cos(yaw), sin(yaw), 0);
     w_R_b->col(1) = w_R_b->col(2).cross(x_c);
     // w_R_b->col(1).normalize();
     w_R_b->col(0) = w_R_b->col(1).cross(w_R_b->col(2));

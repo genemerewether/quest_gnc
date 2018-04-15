@@ -3,14 +3,16 @@
 
 #include <Eigen/Eigen>
 
+#include "quest_gnc/utils/common.h"
+
 namespace quest_gnc {
 
 struct WorldParams {
      // 9.80665 m/s2
-    double gravityMag;
+    FloatingPoint gravityMag;
 
      // 1.2 kg/m3
-    double atmosphereDensity;
+    FloatingPoint atmosphereDensity;
 }; // struct WorldParams NOLINT()
 
 } // namespace quest_gnc NOLINT()

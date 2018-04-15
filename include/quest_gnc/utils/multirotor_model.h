@@ -3,19 +3,21 @@
 
 #include <Eigen/Eigen>
 
+#include "quest_gnc/utils/common.h"
+
 namespace quest_gnc {
 namespace multirotor {
 
 struct MultirotorModel {
-    double mass;
+    FloatingPoint mass;
 
-    double Ixx;
-    double Iyy;
-    double Izz;
+    FloatingPoint Ixx;
+    FloatingPoint Iyy;
+    FloatingPoint Izz;
 
-    double Ixy;
-    double Ixz;
-    double Iyz;
+    FloatingPoint Ixy;
+    FloatingPoint Ixz;
+    FloatingPoint Iyz;
 }; // struct MultirotorModel NOLINT()
 
 } // namespace multirotor NOLINT()

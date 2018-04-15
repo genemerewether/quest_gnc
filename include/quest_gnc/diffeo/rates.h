@@ -3,6 +3,8 @@
 
 #include <Eigen/Eigen>
 
+#include "quest_gnc/utils/common.h"
+
 namespace quest_gnc {
 namespace multirotor {
 
@@ -14,23 +16,23 @@ class Rates {
 
     ~Rates();
 
-    int GetPDotQDot(double thrust,
-                    const Eigen::Vector3d& jerk_w,
-                    const Eigen::Vector3d& snap_w,
-                    const Eigen::Matrix3d& w_R_b,
-                    const Eigen::Vector3d& omega_b,
-                    double* pDot,
-                    double* qDot) const;
+    int GetPDotQDot(FloatingPoint thrust,
+                    const Vector3& jerk_w,
+                    const Vector3& snap_w,
+                    const Matrix3& w_R_b,
+                    const Vector3& omega_b,
+                    FloatingPoint* pDot,
+                    FloatingPoint* qDot) const;
 
-    int GetPQ(double thrust,
-              const Eigen::Vector3d& jerk_w,
-              const Eigen::Matrix3d& w_R_b,
-              double* p,
-              double* q) const;
+    int GetPQ(FloatingPoint thrust,
+              const Vector3& jerk_w,
+              const Matrix3& w_R_b,
+              FloatingPoint* p,
+              FloatingPoint* q) const;
 
-    int ProjectYawDerivToBody(double yaw_deriv,
-                              const Eigen::Vector3d& zBody_w,
-                              double* body_z_deriv) const;
+    int ProjectYawDerivToBody(FloatingPoint yaw_deriv,
+                              const Vector3& zBody_w,
+                              FloatingPoint* body_z_deriv) const;
 
  private:
     // parameters object - warning tolerances, physical parameters

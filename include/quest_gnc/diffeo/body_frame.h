@@ -3,6 +3,8 @@
 
 #include <Eigen/Eigen>
 
+#include "quest_gnc/utils/common.h"
+
 namespace quest_gnc {
 namespace multirotor {
 
@@ -14,8 +16,8 @@ class BodyFrame {
 
     ~BodyFrame();
 
-    int FromYawAccel(float yaw, const Eigen::Vector3d& accel_w,
-                     Eigen::Matrix3d* w_R_b) const;
+    int FromYawAccel(float yaw, const Vector3& accel_w,
+                     Matrix3* w_R_b) const;
 
     // TODO(mereweth) - support 2nd angle, q3, closest axis methods
 
