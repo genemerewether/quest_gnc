@@ -19,13 +19,13 @@ namespace estimation {
 
 ImuInteg::ImuInteg() :
     wParams(),
+    newMeas(false), omega_b__meas(0, 0, 0), a_b__meas(0, 0, 0),
     tLastUpdate(0),
     x_w(0, 0, 0), w_R_b(Matrix3::Identity()),
     v_b(0, 0, 0), omega_b(0, 0, 0),
     b_R_g(Matrix3::Identity()),
     wBias(0, 0, 0), aBias(0, 0, 0),
-    aGyrInv(Matrix3::Identity()),
-    aAccInv(Matrix3::Identity()) {
+    aGyrInv(Matrix3::Identity()), aAccInv(Matrix3::Identity()) {
 }
 
 ImuInteg::~ImuInteg() {
@@ -81,10 +81,14 @@ int ImuInteg::
 
     // TODO(mereweth) - add IMU sample to ring buffer
 
+    int status = 0;
+    // TODO(mereweth) - return codes
+    if (this->newMeas) {  status = -1;  }
+    this->newMeas = true;
     this->omega_b__meas = omega_b;
     this->a_b__meas = a_b;
 
-    return 0;
+    return status;
 }
 
 int ImuInteg::
@@ -158,6 +162,11 @@ int ImuInteg::
         // TODO(mereweth) - calculate dt with exponential filter
 
     const FloatingPoint dt = 1.0 / 1024.0;
+
+    // TODO(mereweth) - return codes
+    if (!this->newMeas) {
+        return -1;
+    }
 
     // -------------------------- Rotation kinematics --------------------------
 

@@ -70,6 +70,7 @@ class ImuInteg {
     WorldParams wParams;
 
     // Stand-in for ring buffer of IMU samples
+    bool newMeas;
     Vector3 omega_b__meas;
     Vector3 a_b__meas;
 
