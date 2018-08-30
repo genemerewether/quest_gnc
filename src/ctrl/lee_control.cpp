@@ -43,16 +43,7 @@ LeeControl::~LeeControl() {
 
 int LeeControl::
   SetWorldParams(WorldParams wParams) {
-    this->inertia(0, 0) = this->mrModel.Ixx;
-    this->inertia(1, 1) = this->mrModel.Iyy;
-    this->inertia(2, 2) = this->mrModel.Izz;
-
-    this->inertia(0, 1) = this->mrModel.Ixy;
-    this->inertia(1, 0) = this->mrModel.Ixy;
-    this->inertia(0, 2) = this->mrModel.Ixz;
-    this->inertia(2, 0) = this->mrModel.Ixz;
-    this->inertia(1, 2) = this->mrModel.Iyz;
-    this->inertia(2, 1) = this->mrModel.Iyz;
+    this->wParams = wParams;
 
     return 0;
 }
@@ -65,6 +56,17 @@ int LeeControl::
     this->mrModel = mrModel;
 
     this->invMass = static_cast<FloatingPoint>(1.0f) / this->mrModel.mass;
+
+    this->inertia(0, 0) = this->mrModel.Ixx;
+    this->inertia(1, 1) = this->mrModel.Iyy;
+    this->inertia(2, 2) = this->mrModel.Izz;
+
+    this->inertia(0, 1) = this->mrModel.Ixy;
+    this->inertia(1, 0) = this->mrModel.Ixy;
+    this->inertia(0, 2) = this->mrModel.Ixz;
+    this->inertia(2, 0) = this->mrModel.Ixz;
+    this->inertia(1, 2) = this->mrModel.Iyz;
+    this->inertia(2, 1) = this->mrModel.Iyz;
 
     return 0;
 }

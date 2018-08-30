@@ -1,8 +1,17 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(quest_gnc)
 
-find_package(catkin_simple REQUIRED)
-catkin_simple()
+if(DEFINED NO_ROS)
+  set(USE_ROS FALSE)
+else()
+  set(USE_ROS TRUE)
+endif()
+set(__ignoreMe ${NO_ROS})
+
+if (USE_ROS)
+  find_package(catkin_simple REQUIRED)
+  catkin_simple()
+endif()
 
 set(CMAKE_MACOSX_RPATH 0)
 add_definitions(-std=c++11 -Wno-sign-compare -Wno-unused-value)
@@ -47,6 +56,7 @@ set("${PROJECT_NAME}_SRCS"
   src/diffeo/body_frame.cpp
   src/diffeo/rates.cpp
   src/ctrl/lee_control.cpp
+  src/est/imu_integ.cpp
 )
 
 #############
@@ -66,9 +76,15 @@ set("${PROJECT_NAME}_SRCS"
 #)
 #target_link_libraries(${PROJECT_NAME}_proto ${PROTOBUF_LIBRARIES})
 
-cs_add_library(${PROJECT_NAME}
-  ${${PROJECT_NAME}_SRCS}
-)
+if (USE_ROS)
+  cs_add_library(${PROJECT_NAME}
+    ${${PROJECT_NAME}_SRCS}
+  )
+else()
+  add_library(${PROJECT_NAME} SHARED
+    ${${PROJECT_NAME}_SRCS}
+  )
+endif()
 #target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_proto ${PROTOBUF_LIBRARIES})
 
 ###################
@@ -84,15 +100,26 @@ if(HAVE_PYBIND11)
     src/pybind11/rates_bind.cc
     src/pybind11/body_frame_bind.cc
     src/pybind11/lee_control_bind.cc
+    src/pybind11/imu_integ_bind.cc
     src/pybind11/bind.cc)
   set_target_properties(quest_gncpy PROPERTIES LINKER_LANGUAGE CXX)
-  target_link_libraries(quest_gncpy PUBLIC #${PROJECT_NAME}_proto
-                                           #${PROTOBUF_LIBRARIES}
-                                           ${catkin_LIBRARIES})
+  if (USE_ROS)
+    target_link_libraries(quest_gncpy PUBLIC #${PROJECT_NAME}_proto
+                                             #${PROTOBUF_LIBRARIES}
+                                             ${catkin_LIBRARIES}
+    )
+  else()
+    target_link_libraries(quest_gncpy PUBLIC #${PROJECT_NAME}_proto
+                                             #${PROTOBUF_LIBRARIES}
+    )
+  endif()
 
-  set_target_properties(quest_gncpy
-    PROPERTIES LIBRARY_OUTPUT_DIRECTORY
-    ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}/../)
+  if (USE_ROS)
+    set_target_properties(quest_gncpy
+      PROPERTIES LIBRARY_OUTPUT_DIRECTORY
+      ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}/../)
+  else()
+  endif()
 endif()
 
 ############
@@ -116,7 +143,12 @@ endif()
 ##########
 # EXPORT #
 ##########
-cs_install()
-cs_export(INCLUDE_DIRS include ${CMAKE_CURRENT_BINARY_DIR}
-          #CFG_EXTRAS quest_gnc-extras.cmake
-          LIBRARIES ${ADDITIONAL_LIBRARIES})
+if (USE_ROS)
+  cs_install()
+  cs_export(INCLUDE_DIRS include ${CMAKE_CURRENT_BINARY_DIR}
+            #CFG_EXTRAS quest_gnc-extras.cmake
+            LIBRARIES ${ADDITIONAL_LIBRARIES})
+else()
+  find_package( Eigen3 REQUIRED NO_MODULE )
+  include_directories(include ${EIGEN3_INCLUDE_DIR})
+endif()
