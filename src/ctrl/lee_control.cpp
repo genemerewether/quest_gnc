@@ -1,3 +1,20 @@
+// ======================================================================
+// \author mereweth
+//
+// \copyright
+// Copyright 2009-2018, by the California Institute of Technology.
+// ALL RIGHTS RESERVED.  United States Government Sponsorship
+// acknowledged. Any commercial use must be negotiated with the Office
+// of Technology Transfer at the California Institute of Technology.
+//
+// This software may be subject to U.S. export control laws and
+// regulations.  By accepting this document, the user agrees to comply
+// with all U.S. export laws and regulations.  User has the
+// responsibility to obtain export licenses, or other export authority
+// as may be required before exporting such information to foreign
+// countries or providing access to foreign persons.
+// ======================================================================
+
 #include "quest_gnc/ctrl/lee_control.h"
 
 #include "Eigen/Geometry"
@@ -6,13 +23,8 @@
 #define FW_ASSERT(cond) assert((cond))
 #endif
 
-//#define DEBUG_PRINT(x,...)
-
-#ifndef DEBUG_PRINT
-//#include "stm32fxxx.h"
-//#define DEBUG_PRINT(x, ...) eprintf(ITM_SendChar, x, ## __VA_ARGS__)
-#define DEBUG_PRINT(x,...) printf(x,##__VA_ARGS__)
-#endif
+#define DEBUG_PRINT(x,...)
+//#define DEBUG_PRINT(x,...) printf(x,##__VA_ARGS__)
 
 namespace quest_gnc {
 namespace multirotor {
