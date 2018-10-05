@@ -57,6 +57,7 @@ set("${PROJECT_NAME}_SRCS"
   src/diffeo/rates.cpp
   src/ctrl/lee_control.cpp
   src/est/imu_integ.cpp
+  src/mixer/basic_mixer.cpp
 )
 
 #############
