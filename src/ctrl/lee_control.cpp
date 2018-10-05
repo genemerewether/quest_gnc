@@ -128,7 +128,7 @@ int LeeControl::
 
     // TODO(mereweth) remove invMass here and make gains account for mass?
     *a_w__comm = (x_w__err.cwiseProduct(this->k_x)
-                  + v_w__err.cwiseProduct(this->k_v)) * invMass;
+                  + v_w__err.cwiseProduct(this->k_v)) * invMass
                   + wParams.gravityMag * Vector3::UnitZ()
                   + this->a_w__des;
 
