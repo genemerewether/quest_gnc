@@ -136,10 +136,11 @@ endif()
 # TESTS #
 #########
 
-#catkin_add_gtest(TEST_EXEC_NAME
-#  TEST_SRC_FILE_NAME
-#)
-#target_link_libraries(TEST_EXEC_NAME ${PROJECT_NAME} ${catkin_LIBRARIES})
+if (USE_ROS)
+  catkin_add_gtest(lee_control_phasing_test
+    test/ctrl/lee_control_phasing_test.cpp)
+  target_link_libraries(lee_control_phasing_test ${PROJECT_NAME} ${catkin_LIBRARIES})
+endif()
 
 ##########
 # EXPORT #
