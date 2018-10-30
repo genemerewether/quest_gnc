@@ -38,17 +38,19 @@ int BodyFrame::
   FromYawAccel(float yaw, const Vector3& accel_w,
                Matrix3* w_R_b) const {
     FW_ASSERT(w_R_b);
-    w_R_b->col(2) = accel_w;
+    Vector3 z_b = accel_w;
 
     // could switch to normalize() if not using thrust_norm later
-    const FloatingPoint thrust_norm = w_R_b->col(2).norm();
-    w_R_b->col(2) /= thrust_norm;
+    const FloatingPoint thrust_norm = z_b.norm();
+    z_b /= thrust_norm;
 
     Vector3 x_c(cos(yaw), sin(yaw), 0);
-    w_R_b->col(1) = w_R_b->col(2).cross(x_c);
-    // w_R_b->col(1).normalize();
-    w_R_b->col(0) = w_R_b->col(1).cross(w_R_b->col(2));
+    Vector3 y_b = z_b.cross(x_c);
+    y_b.normalize();
+    w_R_b->col(0) = y_b.cross(z_b);
     // w_R_b->col(0).normalize();
+    w_R_b->col(1) = y_b;
+    w_R_b->col(2) = z_b;
 
     return 0;
 }
