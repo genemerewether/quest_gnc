@@ -222,7 +222,7 @@ int ImuInteg::
 
     // -------------------------- Position kinematics --------------------------
 
-    const Vector3 a_b__temp = this->a_b__meas - aBias - this->w_R_b.transpose()
+    const Vector3 a_b__temp = this->a_b__meas - aBias + this->w_R_b.transpose()
                               * Vector3(0, 0, wParams.gravityMag);
 
     this->v_b += a_b__temp * dt;
