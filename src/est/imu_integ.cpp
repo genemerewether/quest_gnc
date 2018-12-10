@@ -37,6 +37,7 @@ namespace estimation {
 
 ImuInteg::ImuInteg() :
     wParams(),
+    dt(0.0),
     newMeas(false), omega_b__meas(0, 0, 0), a_b__meas(0, 0, 0),
     tLastUpdate(0),
     x_w(0, 0, 0), w_R_b(Matrix3::Identity()),
@@ -61,6 +62,17 @@ int ImuInteg::
     return 0;
 }
 
+int ImuInteg::
+  SetTimeStep(FloatingPoint dt) {
+    if (dt < 0.0) {
+        return -1;
+    }
+  
+    this->dt = dt;
+
+    return 0;
+}
+  
 // ----------------------------------------------------------------------
 // Output getters
 // ----------------------------------------------------------------------
@@ -177,9 +189,7 @@ int ImuInteg::
         // optionally:
             // apply rotation matrix, scale, and non-orthogonality corrections
         // offset by bias
-        // TODO(mereweth) - calculate dt with exponential filter
-
-    const FloatingPoint dt = 1.0 / 1024.0;
+        // TODO(mereweth) - check dt with exponential filter
 
     // TODO(mereweth) - return codes
     if (!this->newMeas) {
@@ -222,7 +232,7 @@ int ImuInteg::
 
     // -------------------------- Position kinematics --------------------------
 
-    const Vector3 a_b__temp = this->a_b__meas - aBias + this->w_R_b.transpose()
+    const Vector3 a_b__temp = this->a_b__meas - aBias - this->w_R_b.transpose()
                               * Vector3(0, 0, wParams.gravityMag);
 
     this->v_b += a_b__temp * dt;

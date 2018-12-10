@@ -42,6 +42,8 @@ class ImuInteg {
   // ----------------------------------------------------------------------
 
     int SetWorldParams(WorldParams wParams);
+    
+    int SetTimeStep(FloatingPoint dt);
 
   // ----------------------------------------------------------------------
   // Output getters
@@ -85,6 +87,9 @@ class ImuInteg {
  private:
     // Parameters
     WorldParams wParams;
+
+    // Nominal dt
+    FloatingPoint dt;
 
     // Stand-in for ring buffer of IMU samples
     bool newMeas;
