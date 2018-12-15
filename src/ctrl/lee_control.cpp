@@ -116,7 +116,7 @@ int LeeControl::
 }
 
 int LeeControl::
-  GetAccelCommand(Vector3* a_w__comm) {
+  GetAccelCommand(Vector3* a_w__comm, bool velOnly) {
     FW_ASSERT(a_w__comm);
 
     // TODO(mereweth) - flag for missing odometry or setpoint
@@ -127,10 +127,14 @@ int LeeControl::
     const Vector3 v_w__err = this->v_w__des - this->w_R_b * this->v_b;
 
     // TODO(mereweth) remove invMass here and make gains account for mass?
-    *a_w__comm = (x_w__err.cwiseProduct(this->k_x)
-                  + v_w__err.cwiseProduct(this->k_v)) * invMass
-                  + wParams.gravityMag * Vector3::UnitZ()
-                  + this->a_w__des;
+    if (velOnly) {
+        *a_w__comm = v_w__err.cwiseProduct(this->k_v) * invMass;
+    }
+    else {
+        *a_w__comm = (x_w__err.cwiseProduct(this->k_x)
+                      + v_w__err.cwiseProduct(this->k_v)) * invMass;
+    }
+    *a_w__comm += wParams.gravityMag * Vector3::UnitZ() + this->a_w__des;
 
     // TODO(mereweth) - check return value
     (void) this->bodyFrame.FromYawAccel(yaw_des, *a_w__comm, &this->w_R_b__des);

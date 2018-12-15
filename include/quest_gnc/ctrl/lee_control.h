@@ -65,7 +65,7 @@ class LeeControl {
     int GetAccelAngAccelCommand(Vector3* a_w__comm,
                                 Vector3* alpha_b__comm);
 
-    int GetAccelCommand(Vector3* a_w__comm);
+    int GetAccelCommand(Vector3* a_w__comm, bool velOnly = false);
 
     int GetAngAccelCommand(Vector3* alpha_b__comm);
 
