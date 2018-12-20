@@ -58,6 +58,7 @@ set("${PROJECT_NAME}_SRCS"
   src/ctrl/lee_control.cpp
   src/est/imu_integ.cpp
   src/mixer/basic_mixer.cpp
+  src/sysid/signal_gen.cpp
 )
 
 #############
@@ -102,6 +103,7 @@ if(HAVE_PYBIND11)
     src/pybind11/body_frame_bind.cc
     src/pybind11/lee_control_bind.cc
     src/pybind11/imu_integ_bind.cc
+    src/pybind11/signal_gen_bind.cc
     src/pybind11/bind.cc)
   set_target_properties(quest_gncpy PROPERTIES LINKER_LANGUAGE CXX)
   if (USE_ROS)

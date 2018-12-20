@@ -28,7 +28,7 @@
 //#define DEBUG_PRINT(x,...) printf(x,##__VA_ARGS__)
 
 namespace quest_gnc {
-namespace multirotor {
+namespace sysid {
 
 SignalGen::SignalGen() :
     unitAxis(0.0, 0.0, 1.0),
@@ -36,7 +36,6 @@ SignalGen::SignalGen() :
     omega_i(0.0),
     omega_f(0.0),
     amplitude(0.0),
-    phase(0.0),
     iter(0u),
     nIter(0u) {
 }
@@ -62,7 +61,6 @@ int SignalGen::
     this->dt = dt;
 
     this->iter = 0u;
-    this->phase = 0.0f;
 
     return 0;
 }
@@ -87,17 +85,21 @@ int SignalGen::
     GetScalar(double* val, double* dvaldt) {
     FW_ASSERT(val);
     FW_ASSERT(dvaldt);
-    if (iter >= nIter) {
+    if (this->iter >= this->nIter) {
         return -1;
     }
 
-    *val = this->amplitude * sin(this->phase);
-    *dvaldt = 2.0 * this->amplitude * cos(this->phase) * this->iter * this->dt;
-    double omega = this->omega_i + (this->omega_f - this->omega_i)
-                   * (double) this->iter / (double) this->nIter;
-
-    this->phase = fmod(this->phase + omega, 2.0 * M_PI) ;
-    iter++;
+    // fraction completed
+    double frac = (double) this->iter / (double) this->nIter / 2.0;
+    double omega = this->omega_i + (this->omega_f - this->omega_i) * frac;
+    // actual time
+    double t = this->iter * this->dt;
+    *val = this->amplitude * sin(omega * t * 2 * M_PI);
+    *dvaldt = this->amplitude * cos(omega * t * 2 * M_PI)
+              * (this->omega_i + 2 * (this->omega_f - this->omega_i) * frac);
+    DEBUG_PRINT("val %f, dvaldt %f on iter %u of %u; time %f\n", *val, *dvaldt,
+                this->iter, this->nIter, t);
+    this->iter++;
 
     return 0;
 }
@@ -132,5 +134,5 @@ int SignalGen::
     return 0;
 }
 
-} // namespace multirotor NOLINT()
+} // namespace sysid NOLINT()
 } // namespace quest_gnc NOLINT()

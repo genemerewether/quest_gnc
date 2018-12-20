@@ -23,7 +23,7 @@
 #include "quest_gnc/utils/common.h"
 
 namespace quest_gnc {
-namespace multirotor {
+namespace sysid {
 
 class SignalGen {
  public:
@@ -61,19 +61,17 @@ class SignalGen {
     // Underlying chirp sinusoid
 
     double dt; // sec
-    double omega_i; // rad/sec
-    double omega_f; // rad/sec
+    double omega_i; // Hz
+    double omega_f; // Hz
     double amplitude;
 
-    // phase of chirp sinusoid at this iteration
-    double phase; // rad/sec
     unsigned int iter;
     unsigned int nIter;
 
     // parameters object - warning tolerances, physical parameters
 }; // class SignalGen NOLINT()
 
-} // namespace multirotor NOLINT()
+} // namespace sysid NOLINT()
 } // namespace quest_gnc NOLINT()
 
 #endif  // QUEST_GNC_INCLUDE_QUEST_GNC_SYSID_SIGNAL_GEN_H_
