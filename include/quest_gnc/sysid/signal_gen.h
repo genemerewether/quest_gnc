@@ -15,66 +15,65 @@
 // countries or providing access to foreign persons.
 // ======================================================================
 
-#ifndef QUEST_GNC_INCLUDE_QUEST_GNC_MIXER_BASIC_MIXER_H_
-#define QUEST_GNC_INCLUDE_QUEST_GNC_MIXER_BASIC_MIXER_H_
+#ifndef QUEST_GNC_INCLUDE_QUEST_GNC_SYSID_SIGNAL_GEN_H_
+#define QUEST_GNC_INCLUDE_QUEST_GNC_SYSID_SIGNAL_GEN_H_
 
 #include <Eigen/Eigen>
-
-//#include "quest_gnc/diffeo/rates.h"
-//#include "quest_gnc/diffeo/body_frame.h"
-//#include "quest_gnc/utils/multirotor_model.h"
-//#include "quest_gnc/utils/world_params.h"
 
 #include "quest_gnc/utils/common.h"
 
 namespace quest_gnc {
 namespace multirotor {
 
-class BasicMixer {
+class SignalGen {
  public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    BasicMixer();
+    SignalGen();
 
-    BasicMixer(Eigen::MatrixXd mixer);
-
-    ~BasicMixer();
+    ~SignalGen();
 
   // ----------------------------------------------------------------------
-  // Parameter, model, and gain setters
+  // Setters
   // ----------------------------------------------------------------------
 
-  // Will calculate pinv of mixer
-    int SetMixer(Eigen::MatrixXd mixer);
+    int SetChirp(double omega_i, double omega_f, double amplitude,
+                 unsigned int nIter, double dt);
+
+    int SetUnitAxis(const Vector3& axis);
 
   // ----------------------------------------------------------------------
-  // Rotational velocity command
+  // Getters
   // ----------------------------------------------------------------------
 
-    int GetRotorVelCommand(Eigen::VectorXd* rotVel__comm);
+    int GetScalar(double* val, double* dvaldt);
 
-  // ----------------------------------------------------------------------
-  // Torque/moment setter
-  // ----------------------------------------------------------------------
+    int GetVector(Vector3* val);
 
-    int SetTorqueThrustDes(const Vector3& moment_b__des,
-                           const Vector3& thrust_b__des);
+    int GetSO3(Quaternion* q, Vector3* omega);
 
  private:
     // Parameters
 
-    Eigen::MatrixXd mixerPinv;
+    // axis for axis-angle SO3 chirp or vector chirp
+    Vector3 unitAxis;
 
-    // Commanded
+    // Underlying chirp sinusoid
 
-    Vector3 moment_b__des;
+    double dt; // sec
+    double omega_i; // rad/sec
+    double omega_f; // rad/sec
+    double amplitude;
 
-    Vector3 thrust_b__des;
+    // phase of chirp sinusoid at this iteration
+    double phase; // rad/sec
+    unsigned int iter;
+    unsigned int nIter;
 
     // parameters object - warning tolerances, physical parameters
-}; // class BasicMixer NOLINT()
+}; // class SignalGen NOLINT()
 
 } // namespace multirotor NOLINT()
 } // namespace quest_gnc NOLINT()
 
-#endif  // QUEST_GNC_INCLUDE_QUEST_GNC_CTRL_BASIC_MIXER_H_
+#endif  // QUEST_GNC_INCLUDE_QUEST_GNC_SYSID_SIGNAL_GEN_H_

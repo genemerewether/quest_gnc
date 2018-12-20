@@ -63,8 +63,9 @@ int LeeControl::
 int LeeControl::
   SetModel(MultirotorModel mrModel) {
     // TODO(mereweth) - store smallnum as parameter
-    // TODO(mereweth) - use return code here instead of assert?
-    FW_ASSERT(mrModel.mass > 1e-6f);
+    if (mrModel.mass < 1e-6) {
+        return -1;
+    }
     this->mrModel = mrModel;
 
     this->invMass = static_cast<FloatingPoint>(1.0f) / this->mrModel.mass;

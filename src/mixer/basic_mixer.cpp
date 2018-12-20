@@ -29,16 +29,12 @@
 namespace quest_gnc {
 namespace multirotor {
 
-//TODO Add all the parameters
 BasicMixer::BasicMixer() :
-
-    //TODO(mgardine) - What should this be initialised as?
     mixerPinv(),
     moment_b__des(0,0,0), thrust_b__des(0,0,0) {
 }
 
 BasicMixer::~BasicMixer() {
-    // TODO(mgardine)
 }
 
 // ----------------------------------------------------------------------
@@ -49,7 +45,6 @@ int BasicMixer::
   SetMixer(Eigen::MatrixXd mixer) {
 
     // TODO(mgardine) - use return code here if matrix inversion fails?
-    //this->mixer = mixer;
 
     this->mixerPinv =
       mixer.transpose() *
