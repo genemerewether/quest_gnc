@@ -111,6 +111,7 @@ int SignalGen::
         return -1;
     }
     if (this->iter >= this->nIter) {
+        this->signalType = NONE;
         return -1;
     }
 
