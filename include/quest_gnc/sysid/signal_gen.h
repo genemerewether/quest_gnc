@@ -37,16 +37,20 @@ class SignalGen {
   // Setters
   // ----------------------------------------------------------------------
 
-    int SetChirp(double omega_i, double omega_f, double amplitude,
-                 unsigned int nIter, double dt);
+    int SetChirp(FloatingPoint omega_i, FloatingPoint omega_f,
+                 FloatingPoint amplitude, unsigned int nIter,
+                 FloatingPoint dt);
 
+    int SetRamp(FloatingPoint amplitude, unsigned int nIter,
+                FloatingPoint dt);
+    
     int SetUnitAxis(const Vector3& axis);
 
   // ----------------------------------------------------------------------
   // Getters
   // ----------------------------------------------------------------------
 
-    int GetScalar(double* val, double* dvaldt);
+    int GetScalar(FloatingPoint* val, FloatingPoint* dvaldt);
 
     int GetVector(Vector3* val);
 
@@ -58,16 +62,23 @@ class SignalGen {
     // axis for axis-angle SO3 chirp or vector chirp
     Vector3 unitAxis;
 
+    FloatingPoint dt; // sec
+    
     // Underlying chirp sinusoid
-
-    double dt; // sec
-    double omega_i; // Hz
-    double omega_f; // Hz
-    double amplitude;
-
+    FloatingPoint omega_i; // Hz
+    FloatingPoint omega_f; // Hz
+    FloatingPoint amplitude; // reuse for ramp magnitude 
+    
     unsigned int iter;
     unsigned int nIter;
 
+    enum SignalType {
+      NONE,
+      CHIRP,
+      RAMP,
+      STEP
+    } signalType;
+    
     // parameters object - warning tolerances, physical parameters
 }; // class SignalGen NOLINT()
 

@@ -43,7 +43,8 @@ SignalGen::SignalGen() :
     omega_f(0.0),
     amplitude(0.0),
     iter(0u),
-    nIter(0u) {
+    nIter(0u),
+    signalType(NONE) {
 }
 
 SignalGen::~SignalGen() {
@@ -54,8 +55,9 @@ SignalGen::~SignalGen() {
 // ----------------------------------------------------------------------
 
 int SignalGen::
-  SetChirp(double omega_i, double omega_f, double amplitude,
-           unsigned int nIter, double dt) {
+  SetChirp(FloatingPoint omega_i, FloatingPoint omega_f,
+           FloatingPoint amplitude, unsigned int nIter,
+           FloatingPoint dt) {
     if (omega_f < omega_i) {
         return -1;
     }
@@ -67,13 +69,27 @@ int SignalGen::
     this->dt = dt;
 
     this->iter = 0u;
+    this->signalType = CHIRP;
+    
+    return 0;
+}
 
+int SignalGen::
+  SetRamp(FloatingPoint amplitude, unsigned int nIter,
+          FloatingPoint dt) {
+    this->amplitude = amplitude;
+    this->nIter = nIter;
+    this->dt = dt;
+
+    this->iter = 0u;
+    this->signalType = RAMP;
+    
     return 0;
 }
 
 int SignalGen::
   SetUnitAxis(const Vector3& axis) {
-    double norm = axis.norm();
+    FloatingPoint norm = axis.norm();
     if (norm < 1e-6) {
         return -1;
     }
@@ -88,21 +104,45 @@ int SignalGen::
 // ----------------------------------------------------------------------
 
 int SignalGen::
-    GetScalar(double* val, double* dvaldt) {
+    GetScalar(FloatingPoint* val, FloatingPoint* dvaldt) {
     FW_ASSERT(val);
     FW_ASSERT(dvaldt);
+    if (NONE == this->signalType) {
+        return -1;
+    }
     if (this->iter >= this->nIter) {
         return -1;
     }
 
     // fraction completed
-    double frac = (double) this->iter / (double) this->nIter / 2.0;
-    double omega = this->omega_i + (this->omega_f - this->omega_i) * frac;
+    FloatingPoint frac = (FloatingPoint) this->iter / (FloatingPoint) this->nIter;
     // actual time
-    double t = this->iter * this->dt;
-    *val = this->amplitude * sin(omega * t * 2 * M_PI);
-    *dvaldt = this->amplitude * cos(omega * t * 2 * M_PI)
-              * (this->omega_i + 2 * (this->omega_f - this->omega_i) * frac);
+    FloatingPoint t = this->iter * this->dt;
+
+    switch (this->signalType) {
+        case CHIRP:
+            frac *= 0.5;
+            FloatingPoint omega = this->omega_i + (this->omega_f - this->omega_i) * frac;
+            *val = this->amplitude * sin(omega * t * 2 * M_PI);
+            *dvaldt = this->amplitude * cos(omega * t * 2 * M_PI)
+                      * (this->omega_i + 2 * (this->omega_f - this->omega_i) * frac);
+            break;
+        case RAMP:
+            *val = (frac < 0.5) ? (frac * 2.0 * this->amplitude)
+                                : ((1.0 - frac) * 2.0 * this->amplitude);
+            *dvaldt = (frac < 0.5) ? 2.0 * this->amplitude / (this->dt * this->nIter)
+                                   : -2.0 * this->amplitude / (this->dt * this->nIter);
+            break;
+        case STEP:
+            // TODO(mereweth)
+            *val = 0.0;
+            *dvaldt = 0.0;
+            break;
+        default:
+            FW_ASSERT(0);
+            break;
+    }
+    
     DEBUG_PRINT("val %f, dvaldt %f on iter %u of %u; time %f\n", *val, *dvaldt,
                 this->iter, this->nIter, t);
     this->iter++;
@@ -113,8 +153,8 @@ int SignalGen::
 int SignalGen::
   GetVector(Vector3* val) {
     FW_ASSERT(val);
-    double scalar = 0.0f;
-    double dvaldt = 0.0f;
+    FloatingPoint scalar = 0.0f;
+    FloatingPoint dvaldt = 0.0f;
     if (this->GetScalar(&scalar, &dvaldt)) {
         return -1;
     }
@@ -129,8 +169,8 @@ int SignalGen::
     FW_ASSERT(q);
     FW_ASSERT(omega);
 
-    double scalar = 0.0f;
-    double dvaldt = 0.0f;
+    FloatingPoint scalar = 0.0f;
+    FloatingPoint dvaldt = 0.0f;
     if (this->GetScalar(&scalar, &dvaldt)) {
         return -1;
     }
