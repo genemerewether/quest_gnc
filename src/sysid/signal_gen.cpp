@@ -121,11 +121,13 @@ int SignalGen::
 
     switch (this->signalType) {
         case CHIRP:
+        {
             frac *= 0.5;
             FloatingPoint omega = this->omega_i + (this->omega_f - this->omega_i) * frac;
             *val = this->amplitude * sin(omega * t * 2 * M_PI);
             *dvaldt = this->amplitude * cos(omega * t * 2 * M_PI)
                       * (this->omega_i + 2 * (this->omega_f - this->omega_i) * frac);
+        }
             break;
         case RAMP:
             *val = (frac < 0.5) ? (frac * 2.0 * this->amplitude)
