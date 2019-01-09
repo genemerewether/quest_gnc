@@ -19,6 +19,12 @@
 
 #include "Eigen/Geometry"
 
+#ifndef M_PI
+#ifdef BUILD_DSPAL
+#define M_PI 3.14159265358979323846
+#endif
+#endif
+
 #ifndef FW_ASSERT
 #define FW_ASSERT(cond) assert((cond))
 #endif
@@ -188,6 +194,17 @@ int LeeControl::
               const Vector3& omega_b) {
     this->x_w = x_w;
     this->w_R_b = w_q_b.toRotationMatrix();
+
+    // TODO(mereweth) -factor out into shared function
+    Vector3 xRot = Vector3::UnitX();
+    xRot = this->w_R_b * xRot;
+    Vector3 xRotProj = xRot - xRot.dot(Vector3::UnitZ()) * Vector3::UnitZ();
+    xRotProj.normalize();
+    this->yaw = acos(xRotProj.dot(Vector3::UnitX()));
+    if (xRotProj(1) < 0.0) {
+        this->yaw *= -1.0;
+    }
+    
     this->v_b = v_b;
     this->omega_b = omega_b;
     return 0;
@@ -199,6 +216,17 @@ int LeeControl::
   SetAttitudeAngVel(const Quaternion& w_q_b,
                     const Vector3& omega_b) {
     this->w_R_b = w_q_b.toRotationMatrix();
+
+    // TODO(mereweth) -factor out into shared function
+    Vector3 xRot = Vector3::UnitX();
+    xRot = this->w_R_b * xRot;
+    Vector3 xRotProj = xRot - xRot.dot(Vector3::UnitZ()) * Vector3::UnitZ();
+    xRotProj.normalize();
+    this->yaw = acos(xRotProj.dot(Vector3::UnitX()));
+    if (xRotProj(1) < 0.0) {
+        this->yaw *= -1.0;
+    }
+    
     this->omega_b = omega_b;
     return 0;
 
@@ -233,8 +261,36 @@ int LeeControl::
 
 int LeeControl::
   SetYawDes(FloatingPoint yaw_des) {
-    this->yaw_des = yaw_des;
-    return 0;
+
+    if (yaw_des > M_PI) {
+        yaw_des -= 2*M_PI;
+    }
+    else if (yaw_des < -M_PI) {
+        yaw_des += 2*M_PI;
+    }
+  
+    FloatingPoint yawDiff = yaw_des - this->yaw;
+    if (yawDiff < -M_PI) {
+        unsigned int num2pi = 1u + (unsigned int) fabs(yawDiff / (2 * M_PI));
+        yawDiff += num2pi * 2 * M_PI;
+    }
+    else if (yawDiff > M_PI) {
+        unsigned int num2pi = 1u + (unsigned int) fabs(yawDiff / (2 * M_PI));
+        yawDiff -= num2pi * 2 * M_PI;
+    }
+
+    // TODO(mereweth) - param for max yaw tracking error
+    FloatingPoint maxErr = 135 * M_PI / 180.0;
+    if (fabs(yawDiff) > maxErr) {
+        DEBUG_PRINT("yawDiff %f, yaw_des %f, this->yaw %f\n",
+                    yawDiff, yaw_des, this->yaw);
+        this->yaw_des = this->yaw + (yawDiff > 0.0) ? maxErr : maxErr;
+        return -1;
+    }
+    else {
+        this->yaw_des = yaw_des;
+        return 0;
+    }
 
     // TODO(mereweth) - sanitize inputs; return code
 }
@@ -252,6 +308,8 @@ int LeeControl::
 int LeeControl::
   SetAttitudeDes(const Quaternion& w_q_b__des,
                  const Vector3& omega_b__des) {
+    // TODO(mereweth) - check yaw
+  
     this->w_R_b__des = w_q_b__des.toRotationMatrix();
     this->omega_b__des = omega_b__des;
     return 0;
@@ -263,6 +321,8 @@ int LeeControl::
   SetAttitudeAngAccelDes(const Quaternion& w_q_b__des,
                          const Vector3& omega_b__des,
                          const Vector3& alpha_b__des) {
+    // TODO(mereweth) - check yaw
+  
     this->w_R_b__des = w_q_b__des.toRotationMatrix();
     this->omega_b__des = omega_b__des;
     this->alpha_b__des = alpha_b__des;

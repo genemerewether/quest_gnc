@@ -129,6 +129,8 @@ class LeeControl {
 
     Matrix3 w_R_b;
 
+    FloatingPoint yaw;
+
     Vector3 v_b;
 
     Vector3 omega_b;
