@@ -29,6 +29,7 @@
 #define FW_ASSERT(cond) assert((cond))
 #endif
 
+#include <stdio.h>
 #define DEBUG_PRINT(x,...)
 //#define DEBUG_PRINT(x,...) printf(x,##__VA_ARGS__)
 
@@ -374,11 +375,18 @@ int LeeControl::
     Vector3 e_R;
     Vector3 e_omega;
     this->so3Error(&e_R, &e_omega);
-    
+
+    DEBUG_PRINT("omega [%f, %f, %f], sat_omega [%f, %f, %f]\n",
+                this->omega_b(0), this->omega_b(1), this->omega_b(2),
+                this->sat_omega(0), this->sat_omega(1), this->sat_omega(2));
+    DEBUG_PRINT("omega_des [%f, %f, %f]\n",
+                this->omega_b__des(0), this->omega_b__des(1), this->omega_b__des(2));
     this->omega_b__des = this->omega_b
       + (e_omega.cwiseAbs().array() > this->sat_omega.array()).select(
               (e_omega.array() > 0.0).select(this->sat_omega, -this->sat_omega),
               e_omega);
+    DEBUG_PRINT("omega_des after [%f, %f, %f]\n",
+                this->omega_b__des(0), this->omega_b__des(1), this->omega_b__des(2));
 
     if ((e_omega.cwiseAbs().array() > this->sat_omega.array()).any() ||
         (e_R.cwiseAbs().array() > this->sat_R.array()).any()) {
@@ -394,16 +402,30 @@ int LeeControl::
     // NOTE(mereweth) - sensitive to orientation estimate and map alignment
     const Vector3 v_w = this->w_R_b * this->v_b;
     Vector3 e_v = this->v_w__des - v_w;
-    
+
+    DEBUG_PRINT("x_w [%f, %f, %f], sat_x [%f, %f, %f]\n",
+                this->x_w(0), this->x_w(1), this->x_w(2),
+                this->sat_x(0), this->sat_x(1), this->sat_x(2));
+    DEBUG_PRINT("x_w_des [%f, %f, %f]\n",
+                this->x_w__des(0), this->x_w__des(1), this->x_w__des(2));
     this->x_w__des = this->x_w
       + (e_x.cwiseAbs().array() > this->sat_x.array()).select(
               (e_x.array() > 0.0).select(this->sat_x, -this->sat_x),
               e_x);
-    
+    DEBUG_PRINT("x_w__des after [%f, %f, %f]\n",
+                this->x_w__des(0), this->x_w__des(1), this->x_w__des(2));
+
+    DEBUG_PRINT("v_w [%f, %f, %f], sat_v [%f, %f, %f]\n",
+                v_w(0), v_w(1), v_w(2),
+                this->sat_v(0), this->sat_v(1), this->sat_v(2));
+    DEBUG_PRINT("v_w_des [%f, %f, %f]\n",
+                this->v_w__des(0), this->v_w__des(1), this->v_w__des(2));
     this->v_w__des = v_w
       + (e_v.cwiseAbs().array() > this->sat_v.array()).select(
               (e_v.array() > 0.0).select(this->sat_v, -this->sat_v),
               e_v);
+    DEBUG_PRINT("v_w__des after [%f, %f, %f]\n",
+                this->v_w__des(0), this->v_w__des(1), this->v_w__des(2));
     
     if ((e_x.cwiseAbs().array() > this->sat_x.array()).any() ||
         (e_v.cwiseAbs().array() > this->sat_v.array()).any()) {
