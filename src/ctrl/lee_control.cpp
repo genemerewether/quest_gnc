@@ -424,8 +424,6 @@ int LeeControl::
                              * e_R__hat;
     this->w_R_b__des = this->w_R_b * expMap;
     
-    std::cout << this->w_R_b__des << "\n\n\n";
-    
     DEBUG_PRINT("omega [%f, %f, %f], sat_omega [%f, %f, %f]\n",
                 this->omega_b(0), this->omega_b(1), this->omega_b(2),
                 this->sat_omega(0), this->sat_omega(1), this->sat_omega(2));
