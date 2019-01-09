@@ -58,6 +58,12 @@ class LeeControl {
                  const Vector3& k_R,
                  const Vector3& k_omega);
 
+    int SetSaturation(const Vector3& sat_x,
+                      const Vector3& sat_v,
+                      const Vector3& sat_R,
+                      const Vector3& sat_omega,
+                      FloatingPoint sat_yaw);
+
   // ----------------------------------------------------------------------
   // Thrust and moment getters
   // ----------------------------------------------------------------------
@@ -109,12 +115,29 @@ class LeeControl {
                                const Vector3& alpha_b__des);
 
  private:
+    // TODO(mereweth) - factor out into utils?
+    void updateYaw(); // NOTE(mereweth) - updates member variable
+
+    // TODO(mereweth) - factor out into utils?
+    // NOTE(mereweth) - uses, but does not modify, member variable
+    void so3Error(Vector3* e_R, Vector3* e_omega);
+    
+    int saturateAngular(); // NOTE(mereweth) - updates member variable
+    
+    int saturateLinear(); // NOTE(mereweth) - updates member variable
+
     // Parameters
     Vector3 k_x;
     Vector3 k_v;
 
     Vector3 k_R;
     Vector3 k_omega;
+
+    Vector3 sat_x;
+    Vector3 sat_v;
+    Vector3 sat_R;
+    Vector3 sat_omega;
+    FloatingPoint sat_yaw;
 
     MultirotorModel mrModel;
 

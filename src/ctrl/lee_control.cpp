@@ -38,6 +38,9 @@ namespace multirotor {
 LeeControl::LeeControl() :
     k_x(0, 0, 0), k_v(0, 0, 0),
     k_R(0, 0, 0), k_omega(0, 0, 0),
+    sat_x(0, 0, 0), sat_v(0, 0, 0),
+    sat_R(0, 0, 0), sat_omega(0, 0, 0),
+    sat_yaw(0.0),
     mrModel(),
     invMass(1.0f),
     inertia(Matrix3::Identity()),
@@ -76,6 +79,8 @@ int LeeControl::
 
     this->invMass = static_cast<FloatingPoint>(1.0f) / this->mrModel.mass;
 
+    // TODO(mereweth) - check all positive
+    
     this->inertia(0, 0) = this->mrModel.Ixx;
     this->inertia(1, 1) = this->mrModel.Iyy;
     this->inertia(2, 2) = this->mrModel.Izz;
@@ -95,12 +100,25 @@ int LeeControl::
            const Vector3& k_v,
            const Vector3& k_R,
            const Vector3& k_omega) {
-    // TODO(mereweth) - check all positive
+    this->k_x = k_x.cwiseAbs();
+    this->k_v = k_v.cwiseAbs();
+    this->k_R = k_R.cwiseAbs();
+    this->k_omega = k_omega.cwiseAbs();
 
-    this->k_x = k_x;
-    this->k_v = k_v;
-    this->k_R = k_R;
-    this->k_omega = k_omega;
+    return 0;
+}
+
+int LeeControl::
+  SetSaturation(const Vector3& sat_x,
+                const Vector3& sat_v,
+                const Vector3& sat_R,
+                const Vector3& sat_omega,
+                FloatingPoint sat_yaw) {
+    this->sat_x = sat_x.cwiseAbs();
+    this->sat_v = sat_v.cwiseAbs();
+    this->sat_R = sat_R.cwiseAbs();
+    this->sat_omega = sat_omega.cwiseAbs();
+    this->sat_yaw = fabs(sat_yaw);
 
     return 0;
 }
@@ -115,11 +133,11 @@ int LeeControl::
     FW_ASSERT(a_w__comm);
     FW_ASSERT(alpha_b__comm);
 
-    (void) GetAccelCommand(a_w__comm);
+    int stat = GetAccelCommand(a_w__comm);
 
     (void) GetAngAccelCommand(alpha_b__comm);
 
-    return 0;
+    return stat;
 }
 
 int LeeControl::
@@ -146,22 +164,17 @@ int LeeControl::
     // TODO(mereweth) - check return value
     (void) this->bodyFrame.FromYawAccel(yaw_des, *a_w__comm, &this->w_R_b__des);
 
-    return 0;
+    // NOTE(mereweth) - commanded attitude is set above, so give error code if saturated
+    return this->saturateAngular();
 }
 
 int LeeControl::
   GetAngAccelCommand(Vector3* alpha_b__comm) {
     FW_ASSERT(alpha_b__comm);
 
-    // TODO(mereweth) - check skew-symmetric, refactor vee operator as util
-    const Matrix3 e_R__hat = 0.5 * (this->w_R_b.transpose()
-                                            * this->w_R_b__des
-                                            - this->w_R_b__des.transpose()
-                                            * this->w_R_b);
-    const Vector3 e_R(e_R__hat(2, 1), e_R__hat(0, 2), e_R__hat(1, 0));
-
-    const Vector3 e_omega = this->w_R_b.transpose() * this->w_R_b__des
-                                    * this->omega_b__des - this->omega_b;
+    Vector3 e_R;
+    Vector3 e_omega;
+    this->so3Error(&e_R, &e_omega);
 
     // TODO(mereweth) - refactor hat operator as util
     Matrix3 omega_b__hat;
@@ -182,7 +195,7 @@ int LeeControl::
 
     // TODO(mereweth) - sanitize inputs; return code
 }
-
+  
 // ----------------------------------------------------------------------
 // Feedback setters
 // ----------------------------------------------------------------------
@@ -194,19 +207,10 @@ int LeeControl::
               const Vector3& omega_b) {
     this->x_w = x_w;
     this->w_R_b = w_q_b.toRotationMatrix();
-
-    // TODO(mereweth) -factor out into shared function
-    Vector3 xRot = Vector3::UnitX();
-    xRot = this->w_R_b * xRot;
-    Vector3 xRotProj = xRot - xRot.dot(Vector3::UnitZ()) * Vector3::UnitZ();
-    xRotProj.normalize();
-    this->yaw = acos(xRotProj.dot(Vector3::UnitX()));
-    if (xRotProj(1) < 0.0) {
-        this->yaw *= -1.0;
-    }
-    
     this->v_b = v_b;
     this->omega_b = omega_b;
+
+    this->updateYaw();
     return 0;
 
     // TODO(mereweth) - sanitize inputs; return code
@@ -215,19 +219,10 @@ int LeeControl::
 int LeeControl::
   SetAttitudeAngVel(const Quaternion& w_q_b,
                     const Vector3& omega_b) {
-    this->w_R_b = w_q_b.toRotationMatrix();
-
-    // TODO(mereweth) -factor out into shared function
-    Vector3 xRot = Vector3::UnitX();
-    xRot = this->w_R_b * xRot;
-    Vector3 xRotProj = xRot - xRot.dot(Vector3::UnitZ()) * Vector3::UnitZ();
-    xRotProj.normalize();
-    this->yaw = acos(xRotProj.dot(Vector3::UnitX()));
-    if (xRotProj(1) < 0.0) {
-        this->yaw *= -1.0;
-    }
-    
+    this->w_R_b = w_q_b.toRotationMatrix();    
     this->omega_b = omega_b;
+
+    this->updateYaw();
     return 0;
 
     // TODO(mereweth) - sanitize inputs; return code
@@ -254,7 +249,8 @@ int LeeControl::
     this->x_w__des = x_w__des;
     this->v_w__des = v_w__des;
     this->a_w__des = a_w__des;
-    return 0;
+    
+    return this->saturateLinear();
 
     // TODO(mereweth) - sanitize inputs; return code
 }
@@ -279,12 +275,10 @@ int LeeControl::
         yawDiff -= num2pi * 2 * M_PI;
     }
 
-    // TODO(mereweth) - param for max yaw tracking error
-    FloatingPoint maxErr = 135 * M_PI / 180.0;
-    if (fabs(yawDiff) > maxErr) {
+    if (fabs(yawDiff) > this->sat_yaw) {
         DEBUG_PRINT("yawDiff %f, yaw_des %f, this->yaw %f\n",
                     yawDiff, yaw_des, this->yaw);
-        this->yaw_des = this->yaw + (yawDiff > 0.0) ? maxErr : maxErr;
+        this->yaw_des = this->yaw + (yawDiff > 0.0) ? this->sat_yaw : -this->sat_yaw;
         return -1;
     }
     else {
@@ -300,19 +294,19 @@ int LeeControl::
                  const Vector3& a_w__des) {
     this->v_w__des = v_w__des;
     this->a_w__des = a_w__des;
-    return 0;
+    
+    return this->saturateLinear();
 
     // TODO(mereweth) - sanitize inputs; return code
 }
 
 int LeeControl::
   SetAttitudeDes(const Quaternion& w_q_b__des,
-                 const Vector3& omega_b__des) {
-    // TODO(mereweth) - check yaw
-  
+                 const Vector3& omega_b__des) {  
     this->w_R_b__des = w_q_b__des.toRotationMatrix();
     this->omega_b__des = omega_b__des;
-    return 0;
+
+    return this->saturateAngular();
 
     // TODO(mereweth) - sanitize inputs; return code
 }
@@ -320,13 +314,12 @@ int LeeControl::
 int LeeControl::
   SetAttitudeAngAccelDes(const Quaternion& w_q_b__des,
                          const Vector3& omega_b__des,
-                         const Vector3& alpha_b__des) {
-    // TODO(mereweth) - check yaw
-  
+                         const Vector3& alpha_b__des) {  
     this->w_R_b__des = w_q_b__des.toRotationMatrix();
     this->omega_b__des = omega_b__des;
     this->alpha_b__des = alpha_b__des;
-    return 0;
+    
+    return this->saturateAngular();
 
     // TODO(mereweth) - sanitize inputs; return code
 }
@@ -338,10 +331,86 @@ int LeeControl::
     this->x_w__des = x_w__des;
     this->v_w__des = v_w__des;
     this->alpha_b__des = alpha_b__des;
-    return 0;
+    
+    return this->saturateLinear();
 
     // TODO(mereweth) - sanitize inputs; return code
 }
+  
+// ----------------------------------------------------------------------
+// Private helper functions
+// ----------------------------------------------------------------------
+  
+// TODO(mereweth) - share in utils?
+void LeeControl::
+  updateYaw() {
+    Vector3 xRot = Vector3::UnitX();
+    xRot = this->w_R_b * xRot;
+    Vector3 xRotProj = xRot - xRot.dot(Vector3::UnitZ()) * Vector3::UnitZ();
+    xRotProj.normalize();
+    this->yaw = acos(xRotProj.dot(Vector3::UnitX()));
+    if (xRotProj(1) < 0.0) {
+        this->yaw *= -1.0;
+    }
+}
 
+void LeeControl::
+  so3Error(Vector3* e_R, Vector3* e_omega) {
+    FW_ASSERT(e_R);
+    FW_ASSERT(e_omega);
+    // TODO(mereweth) - check skew-symmetric, refactor vee operator as util
+    const Matrix3 e_R__hat = 0.5 * (this->w_R_b.transpose()
+                                            * this->w_R_b__des
+                                            - this->w_R_b__des.transpose()
+                                            * this->w_R_b);
+    *e_R = Vector3(e_R__hat(2, 1), e_R__hat(0, 2), e_R__hat(1, 0));
+
+    *e_omega = this->w_R_b.transpose() * this->w_R_b__des
+               * this->omega_b__des - this->omega_b;
+}
+
+int LeeControl::
+  saturateAngular() {
+    Vector3 e_R;
+    Vector3 e_omega;
+    this->so3Error(&e_R, &e_omega);
+    
+    this->omega_b__des = this->omega_b
+      + (e_omega.cwiseAbs().array() > this->sat_omega.array()).select(
+              (e_omega.array() > 0.0).select(this->sat_omega, -this->sat_omega),
+              e_omega);
+
+    if ((e_omega.cwiseAbs().array() > this->sat_omega.array()).any() ||
+        (e_R.cwiseAbs().array() > this->sat_R.array()).any()) {
+        return -1;
+    }
+    return 0;
+}
+    
+int LeeControl::
+  saturateLinear() {
+    Vector3 e_x = this->x_w__des - this->x_w;
+    
+    // NOTE(mereweth) - sensitive to orientation estimate and map alignment
+    const Vector3 v_w = this->w_R_b * this->v_b;
+    Vector3 e_v = this->v_w__des - v_w;
+    
+    this->x_w__des = this->x_w
+      + (e_x.cwiseAbs().array() > this->sat_x.array()).select(
+              (e_x.array() > 0.0).select(this->sat_x, -this->sat_x),
+              e_x);
+    
+    this->v_w__des = v_w
+      + (e_v.cwiseAbs().array() > this->sat_v.array()).select(
+              (e_v.array() > 0.0).select(this->sat_v, -this->sat_v),
+              e_v);
+    
+    if ((e_x.cwiseAbs().array() > this->sat_x.array()).any() ||
+        (e_v.cwiseAbs().array() > this->sat_v.array()).any()) {
+        return -1;
+    }
+    return 0;
+}
+  
 } // namespace multirotor NOLINT()
 } // namespace quest_gnc NOLINT()
