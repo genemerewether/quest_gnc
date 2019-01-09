@@ -121,6 +121,15 @@ int LeeControl::
     this->sat_omega = sat_omega.cwiseAbs();
     this->sat_yaw = fabs(sat_yaw);
 
+    
+    DEBUG_PRINT("sat_x [%f, %f, %f]\n",
+                this->sat_x(0), this->sat_x(1), this->sat_x(2));
+    DEBUG_PRINT("sat_v [%f, %f, %f]\n",
+                this->sat_v(0), this->sat_v(1), this->sat_v(2));
+    DEBUG_PRINT("sat_R [%f, %f, %f]\n",
+                this->sat_R(0), this->sat_R(1), this->sat_R(2));
+    DEBUG_PRINT("sat_omega [%f, %f, %f]\n",
+                this->sat_omega(0), this->sat_omega(1), this->sat_omega(2));
     return 0;
 }
 
@@ -381,10 +390,10 @@ int LeeControl::
                 this->sat_omega(0), this->sat_omega(1), this->sat_omega(2));
     DEBUG_PRINT("omega_des [%f, %f, %f]\n",
                 this->omega_b__des(0), this->omega_b__des(1), this->omega_b__des(2));
-    this->omega_b__des = this->omega_b
+    this->omega_b__des = this->w_R_b__des.transpose() * this->w_R_b * (this->omega_b
       + (e_omega.cwiseAbs().array() > this->sat_omega.array()).select(
               (e_omega.array() > 0.0).select(this->sat_omega, -this->sat_omega),
-              e_omega);
+              e_omega));
     DEBUG_PRINT("omega_des after [%f, %f, %f]\n",
                 this->omega_b__des(0), this->omega_b__des(1), this->omega_b__des(2));
 
