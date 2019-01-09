@@ -384,7 +384,48 @@ int LeeControl::
     Vector3 e_R;
     Vector3 e_omega;
     this->so3Error(&e_R, &e_omega);
+    
+    DEBUG_PRINT("e_R [%f, %f, %f], sat_R [%f, %f, %f]\n",
+                this->e_R(0), this->e_R(1), this->e_R(2),
+                this->sat_R(0), this->sat_R(1), this->sat_R(2));
+    const Vector3 e_R__clamped = (e_R.cwiseAbs().array() > this->sat_R.array()).select(
+              (e_R.array() > 0.0).select(this->sat_R, -this->sat_R),
+              e_R);
+    DEBUG_PRINT("e_R__clamped [%f, %f, %f]\n",
+                this->e_R__clamped(0), this->e_R__clamped(1), this->e_R__clamped(2));
+    
+    // TODO(mereweth) - factor out this functionality
+    Matrix3 e_R__hat;
+    e_R__hat << 0, -e_R__clamped.z(), e_R__clamped.y(),
+                e_R__clamped.z(), 0, -e_R__clamped.x(),
+                -e_R__clamped.y(), e_R__clamped.x(), 0;
+    const FloatingPoint theta = e_R__clamped.dot(e_R__clamped);
+    const FloatingPoint thetaSquared = theta * theta;
 
+    /* NOTE(mereweth) - check for small angle rotation about angular velocity
+     * vector; use Taylor expansion for trig terms
+     */
+    FloatingPoint sinThetaByTheta = 0.0;
+    FloatingPoint oneMinusCosThetaByThetaSquared = 0.0;
+    // TODO(mereweth) - use parameter object for threshold on theta
+    if (theta < 0.01) {
+        sinThetaByTheta = 1.0 - thetaSquared / 6.0
+                          + thetaSquared * thetaSquared / 120.0;
+        oneMinusCosThetaByThetaSquared = 0.5 - thetaSquared / 24.0
+                                         + thetaSquared * thetaSquared / 720.0;
+    }
+    else {
+        sinThetaByTheta = sin(theta) / theta;
+        oneMinusCosThetaByThetaSquared = (1.0 - cos(theta)) / thetaSquared;
+    }
+
+    const Matrix3 expMap = Matrix3::Identity() + sinThetaByTheta * e_R__hat
+                           + oneMinusCosThetaByThetaSquared * e_R__hat
+                             * e_R__hat;
+    this->w_R_b__des = this->w_R_b * expMap;
+    
+    std::cout << this->w_R_b__des << "\n\n\n";
+    
     DEBUG_PRINT("omega [%f, %f, %f], sat_omega [%f, %f, %f]\n",
                 this->omega_b(0), this->omega_b(1), this->omega_b(2),
                 this->sat_omega(0), this->sat_omega(1), this->sat_omega(2));
