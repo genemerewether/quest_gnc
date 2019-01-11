@@ -18,6 +18,8 @@
 
 #include "quest_gnc/est/imu_integ.h"
 
+#include "quest_gnc/utils/so3.h"
+
 #include "Eigen/Geometry"
 
 #include <math.h>
@@ -200,34 +202,8 @@ int ImuInteg::
 
     this->omega_b = this->omega_b__meas - wBias;
     const Vector3 omega_b__dt = dt * this->omega_b;
-
-    Matrix3 omega_b__hat;
-    omega_b__hat << 0, -omega_b__dt.z(), omega_b__dt.y(),
-                    omega_b__dt.z(), 0, -omega_b__dt.x(),
-                    -omega_b__dt.y(), omega_b__dt.x(), 0;
-    const FloatingPoint theta = omega_b__dt.dot(omega_b__dt);
-    const FloatingPoint thetaSquared = theta * theta;
-
-    /* NOTE(mereweth) - check for small angle rotation about angular velocity
-     * vector; use Taylor expansion for trig terms
-     */
-    FloatingPoint sinThetaByTheta = 0.0;
-    FloatingPoint oneMinusCosThetaByThetaSquared = 0.0;
-    // TODO(mereweth) - use parameter object for threshold on theta
-    if (theta < 0.01) {
-        sinThetaByTheta = 1.0 - thetaSquared / 6.0
-                          + thetaSquared * thetaSquared / 120.0;
-        oneMinusCosThetaByThetaSquared = 0.5 - thetaSquared / 24.0
-                                         + thetaSquared * thetaSquared / 720.0;
-    }
-    else {
-        sinThetaByTheta = sin(theta) / theta;
-        oneMinusCosThetaByThetaSquared = (1.0 - cos(theta)) / thetaSquared;
-    }
-
-    const Matrix3 expMap = Matrix3::Identity() + sinThetaByTheta * omega_b__hat
-                           + oneMinusCosThetaByThetaSquared * omega_b__hat
-                             * omega_b__hat;
+    Matrix3 expMap;
+    expMap3(omega_b__dt, &expMap);
     const Matrix3 w_R_b__temp = this->w_R_b * expMap;
 
     // -------------------------- Position kinematics --------------------------

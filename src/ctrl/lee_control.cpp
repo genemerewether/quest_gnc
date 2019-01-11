@@ -17,7 +17,11 @@
 
 #include "quest_gnc/ctrl/lee_control.h"
 
+#include "quest_gnc/utils/so3.h"
+
 #include "Eigen/Geometry"
+
+#include <math.h>
 
 #ifndef M_PI
 #ifdef BUILD_DSPAL
@@ -194,11 +198,8 @@ int LeeControl::
                      + this->omega_b.cross(this->inertia * this->omega_b);
 
     if (!rpVelOnly && !yawVelOnly) {
-        // TODO(mereweth) - refactor hat operator as util
         Matrix3 omega_b__hat;
-        omega_b__hat << 0, -this->omega_b.z(), this->omega_b.y(),
-                        this->omega_b.z(), 0, -this->omega_b.x(),
-                        -this->omega_b.y(), this->omega_b.x(), 0;
+        hat3(this->omega_b, &omega_b__hat);
         *alpha_b__comm -= this->inertia * (omega_b__hat * this->w_R_b.transpose()
                                            * this->w_R_b__des * this->omega_b__des
                                            - this->w_R_b.transpose()
@@ -294,7 +295,7 @@ int LeeControl::
     if (fabs(yawDiff) > this->sat_yaw) {
         DEBUG_PRINT("yawDiff %f, yaw_des %f, this->yaw %f\n",
                     yawDiff, yaw_des, this->yaw);
-        this->yaw_des = this->yaw + (yawDiff > 0.0) ? this->sat_yaw : -this->sat_yaw;
+        this->yaw_des = this->yaw + ((yawDiff > 0.0) ? this->sat_yaw : -this->sat_yaw);
         return -1;
     }
     else {
@@ -378,12 +379,12 @@ void LeeControl::
            bool yawVelOnly) {
     FW_ASSERT(e_R);
     FW_ASSERT(e_omega);
-    // TODO(mereweth) - check skew-symmetric, refactor vee operator as util
     const Matrix3 e_R__hat = 0.5 * (this->w_R_b.transpose()
                                             * this->w_R_b__des
                                             - this->w_R_b__des.transpose()
                                             * this->w_R_b);
-    *e_R = Vector3(e_R__hat(2, 1), e_R__hat(0, 2), e_R__hat(1, 0));
+    // TODO(mereweth) - return error code
+    vee3(e_R, e_R__hat);
 
     if (rpVelOnly || yawVelOnly) {
         *e_omega = this->omega_b__des - this->omega_b;
@@ -418,35 +419,9 @@ int LeeControl::
               e_R);
     DEBUG_PRINT("e_R__clamped [%f, %f, %f]\n",
                 this->e_R__clamped(0), this->e_R__clamped(1), this->e_R__clamped(2));
-    
-    // TODO(mereweth) - factor out this functionality
-    Matrix3 e_R__hat;
-    e_R__hat << 0, -e_R__clamped.z(), e_R__clamped.y(),
-                e_R__clamped.z(), 0, -e_R__clamped.x(),
-                -e_R__clamped.y(), e_R__clamped.x(), 0;
-    const FloatingPoint theta = e_R__clamped.dot(e_R__clamped);
-    const FloatingPoint thetaSquared = theta * theta;
 
-    /* NOTE(mereweth) - check for small angle rotation about angular velocity
-     * vector; use Taylor expansion for trig terms
-     */
-    FloatingPoint sinThetaByTheta = 0.0;
-    FloatingPoint oneMinusCosThetaByThetaSquared = 0.0;
-    // TODO(mereweth) - use parameter object for threshold on theta
-    if (theta < 0.01) {
-        sinThetaByTheta = 1.0 - thetaSquared / 6.0
-                          + thetaSquared * thetaSquared / 120.0;
-        oneMinusCosThetaByThetaSquared = 0.5 - thetaSquared / 24.0
-                                         + thetaSquared * thetaSquared / 720.0;
-    }
-    else {
-        sinThetaByTheta = sin(theta) / theta;
-        oneMinusCosThetaByThetaSquared = (1.0 - cos(theta)) / thetaSquared;
-    }
-
-    const Matrix3 expMap = Matrix3::Identity() + sinThetaByTheta * e_R__hat
-                           + oneMinusCosThetaByThetaSquared * e_R__hat
-                             * e_R__hat;
+    Matrix3 expMap;
+    expMap3(e_R__clamped, &expMap);
     this->w_R_b__des = this->w_R_b * expMap;
     
     DEBUG_PRINT("omega [%f, %f, %f], sat_omega [%f, %f, %f]\n",
