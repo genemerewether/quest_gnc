@@ -24,10 +24,6 @@
 
 #include <math.h>
 
-#ifndef FW_ASSERT
-#define FW_ASSERT(cond) assert((cond))
-#endif
-
 //#define DEBUG_PRINT(x,...)
 
 #ifndef DEBUG_PRINT
@@ -40,7 +36,7 @@ namespace estimation {
 ImuInteg::ImuInteg() :
     wParams(),
     dt(0.0),
-    newMeas(false), omega_b__meas(0, 0, 0), a_b__meas(0, 0, 0),
+    imuBuf(),
     tLastUpdate(0),
     x_w(0, 0, 0), w_R_b(Matrix3::Identity()),
     v_b(0, 0, 0), omega_b(0, 0, 0),
@@ -102,37 +98,43 @@ int ImuInteg::
 // ----------------------------------------------------------------------
 
 int ImuInteg::
-  AddImu(const Vector3& omega_b,
-         const Vector3& a_b) {
-    /* TODO(mereweth) - don't add IMU data from before time of latest state
-     * update
-     */
+  AddImu(const ImuSample& imu) {
+    // could only happen with out-of-order IMU data
+    if (imu.t < tLastUpdate) {
+        return -1;
+    }
+    // could only happen with out-of-order IMU data
+    if (this->imuBuf.size() &&
+        (imu.t < this->imuBuf.getLastIn()->t)) {
+        return -2;
+    }
 
-    /* TODO(mereweth) - error if overflowing ring buffer
-     */
-
-    // TODO(mereweth) - add IMU sample to ring buffer
-
-    int status = 0;
-    // TODO(mereweth) - return codes
-    if (this->newMeas) {  status = -1;  }
-    this->newMeas = true;
-    this->omega_b__meas = omega_b;
-    this->a_b__meas = a_b;
-
-    return status;
+    return this->imuBuf.queue(&imu);
 }
 
 int ImuInteg::
-  SetUpdate(FloatingPoint tValid,
+  SetUpdate(double tValid,
             const Vector3& x_w,
             const Quaternion& w_q_b,
             const Vector3& v_w,
             const Vector3& wBias,
             const Vector3& aBias) {
-    /* TODO(mereweth) - don't allow state updates from before time of latest state
-     * update
-     */
+    // could only happen with out-of-order state update data
+    if (tValid < tLastUpdate) {
+        return -1;
+    }
+
+    // protect against old state update that IMU buffer doesn't cover
+    if (this->imuBuf.size() &&
+        (tValid < this->imuBuf.getFirstIn()->t)) {
+        return -2;
+    }
+
+    // TODO(mereweth) - what to do if we have no IMU samples?
+    // should only be possible with hardware failure
+
+    // TODO(mereweth) - check for state update after most recent IMU sample?
+    // should only be possible in case of bad clock sync
 
     this->tLastUpdate = tValid;
     this->x_w = x_w;
@@ -145,7 +147,7 @@ int ImuInteg::
 }
 
 int ImuInteg::
-  SetUpdate(FloatingPoint tValid,
+  SetUpdate(double tValid,
             const Vector3& x_w,
             const Quaternion& w_q_b,
             const Vector3& v_w,
@@ -154,16 +156,16 @@ int ImuInteg::
             const Quaternion& b_q_g,
             const Matrix3& aGyrInv,
             const Matrix3& aAccInv) {
-    /* TODO(mereweth) - don't allow state updates from before time of latest state
-     * update
-     */
+    int stat = SetUpdate(tValid, x_w, w_q_b, v_w, wBias, aBias);
+    if (stat) {
+        return stat;
+    }
 
     this->b_R_g = b_q_g.toRotationMatrix();
     this->aGyrInv = aGyrInv;
     this->aAccInv = aAccInv;
 
-    // TODO(mereweth) - use return value of setUpdate
-    return SetUpdate(tValid, x_w, w_q_b, v_w, wBias, aBias);
+    return 0;
 }
 
 // ----------------------------------------------------------------------
@@ -193,28 +195,35 @@ int ImuInteg::
         // offset by bias
         // TODO(mereweth) - check dt with exponential filter
 
-    // TODO(mereweth) - return codes
-    if (!this->newMeas) {
-        return -1;
+    // discard IMU samples from before last update
+    while (this->imuBuf.size() &&
+           (tLastUpdate > this->imuBuf.getFirstIn()->t)) {
+        this->imuBuf.remove();
     }
 
-    // -------------------------- Rotation kinematics --------------------------
+    // NOTE(mereweth) - need to keep all IMU samples since last update
+    // in case another update from right after it comes in
+    for (int i = 0; i < this->imuBuf.size(); i++) {
+        const quest_gnc::ImuSample* imu = this->imuBuf.get(i);
+        FW_ASSERT(imu != NULL);
+        // -------------------------- Rotation kinematics --------------------------
 
-    this->omega_b = this->omega_b__meas - wBias;
-    const Vector3 omega_b__dt = dt * this->omega_b;
-    Matrix3 expMap;
-    expMap3(omega_b__dt, &expMap);
-    const Matrix3 w_R_b__temp = this->w_R_b * expMap;
+        this->omega_b = imu->omega_b - this->wBias;
+        const Vector3 omega_b__dt = this->dt * this->omega_b;
+        Matrix3 expMap;
+        expMap3(omega_b__dt, &expMap);
+        const Matrix3 w_R_b__temp = this->w_R_b * expMap;
 
-    // -------------------------- Position kinematics --------------------------
+        // -------------------------- Position kinematics --------------------------
 
-    const Vector3 a_b__temp = this->a_b__meas - aBias - this->w_R_b.transpose()
-                              * Vector3(0, 0, wParams.gravityMag);
+        const Vector3 a_b__temp = imu->a_b - this->aBias - this->w_R_b.transpose()
+                                  * Vector3(0, 0, this->wParams.gravityMag);
 
-    this->v_b += a_b__temp * dt;
-    this->x_w += this->w_R_b * this->v_b * dt;
+        this->v_b += a_b__temp * this->dt;
+        this->x_w += this->w_R_b * this->v_b * this->dt;
 
-    this->w_R_b = w_R_b__temp;
+        this->w_R_b = w_R_b__temp;
+    }
 
     return 0;
 }

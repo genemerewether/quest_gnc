@@ -20,6 +20,25 @@
 
 #include <Eigen/Eigen>
 
+#include <math.h>
+
+#ifndef FW_ASSERT
+#define FW_ASSERT(cond) assert((cond))
+#endif
+
+#ifndef COMPILE_TIME_ASSERT
+#define COMPILE_TIME_ASSERT( condition, name )\
+  do { \
+    enum { assert_failed_ ## name = 1/(condition) }; \
+  } while(0)
+#endif
+
+#ifndef M_PI
+#ifdef BUILD_DSPAL
+#define M_PI 3.14159265358979323846
+#endif
+#endif
+
 namespace quest_gnc {
 
 #ifndef QUEST_GNC_FLOAT_TYPE
@@ -33,6 +52,13 @@ typedef Eigen::Matrix<FloatingPoint, 3, 1> Vector3;
 typedef Eigen::Matrix<FloatingPoint, 3, 3> Matrix3;
 typedef Eigen::Quaternion<FloatingPoint> Quaternion;
 typedef Eigen::AngleAxis<FloatingPoint> AngleAxis;
+
+struct ImuSample {
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    double t;
+    Vector3 omega_b;
+    Vector3 a_b;
+};
 
 } // namespace quest_gnc NOLINT()
 

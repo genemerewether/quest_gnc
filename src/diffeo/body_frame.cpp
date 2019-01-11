@@ -19,10 +19,6 @@
 
 #include "Eigen/Geometry"
 
-#ifndef FW_ASSERT
-#define FW_ASSERT(cond) assert((cond))
-#endif
-
 namespace quest_gnc {
 namespace multirotor {
 

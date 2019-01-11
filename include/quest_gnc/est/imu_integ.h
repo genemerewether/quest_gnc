@@ -21,10 +21,11 @@
 #include <Eigen/Eigen>
 
 #include "quest_gnc/utils/world_params.h"
-
 #include "quest_gnc/utils/common.h"
+#include "quest_gnc/utils/ringbuffer.h"
 
 namespace quest_gnc {
+typedef ringbuffer<ImuSample, 1000> ImuBuffer;
 namespace estimation {
 
 class ImuInteg {
@@ -58,17 +59,16 @@ class ImuInteg {
   // Input setters
   // ----------------------------------------------------------------------
 
-    int AddImu(const Vector3& omega_b,
-               const Vector3& a_b);
+    int AddImu(const ImuSample& imu);
 
-    int SetUpdate(FloatingPoint tValid,
+    int SetUpdate(double tValid,
                   const Vector3& x_w,
                   const Quaternion& w_q_b,
                   const Vector3& v_w,
                   const Vector3& wBias,
                   const Vector3& aBias);
 
-    int SetUpdate(FloatingPoint tValid,
+    int SetUpdate(double tValid,
                   const Vector3& x_w,
                   const Quaternion& w_q_b,
                   const Vector3& v_w,
@@ -91,14 +91,11 @@ class ImuInteg {
     // Nominal dt
     FloatingPoint dt;
 
-    // Stand-in for ring buffer of IMU samples
-    bool newMeas;
-    Vector3 omega_b__meas;
-    Vector3 a_b__meas;
+    ImuBuffer imuBuf;
 
     // Odometry
 
-    FloatingPoint tLastUpdate;
+    double tLastUpdate;
 
     Vector3 x_w;
 

@@ -20,16 +20,6 @@
 #include "Eigen/Geometry"
 #include <math.h>
 
-#ifndef M_PI
-#ifdef BUILD_DSPAL
-#define M_PI 3.14159265358979323846
-#endif
-#endif
-
-#ifndef FW_ASSERT
-#define FW_ASSERT(cond) assert((cond))
-#endif
-
 #define DEBUG_PRINT(x,...)
 //#define DEBUG_PRINT(x,...) printf(x,##__VA_ARGS__)
 

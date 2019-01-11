@@ -19,10 +19,6 @@
 
 #include "Eigen/Geometry"
 
-#ifndef FW_ASSERT
-#define FW_ASSERT(cond) assert((cond))
-#endif
-
 #define DEBUG_PRINT(x,...)
 //#define DEBUG_PRINT(x,...) printf(x,##__VA_ARGS__)
 
