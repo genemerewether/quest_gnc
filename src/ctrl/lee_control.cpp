@@ -189,15 +189,6 @@ int LeeControl::
     this->so3Error(&e_R, &e_omega,
                    rpVelOnly, yawVelOnly);
 
-    if (rpVelOnly) {
-        e_R(0) = 0;
-        e_R(1) = 0;
-    }
-    
-    if (yawVelOnly) {
-        e_R(2) = 0;
-    }
-
     *alpha_b__comm = e_R.cwiseProduct(this->k_R)
                      + e_omega.cwiseProduct(this->k_omega)
                      + this->omega_b.cross(this->inertia * this->omega_b);
@@ -394,13 +385,21 @@ void LeeControl::
                                             * this->w_R_b);
     *e_R = Vector3(e_R__hat(2, 1), e_R__hat(0, 2), e_R__hat(1, 0));
 
-
     if (rpVelOnly || yawVelOnly) {
         *e_omega = this->omega_b__des - this->omega_b;
     }
     else {
         *e_omega = this->w_R_b.transpose() * this->w_R_b__des
                    * this->omega_b__des - this->omega_b;
+    }
+    
+    if (rpVelOnly) {
+        e_R->x() = 0;
+        e_R->y() = 0;
+    }
+    
+    if (yawVelOnly) {
+        e_R->z() = 0;
     }
 }
 
