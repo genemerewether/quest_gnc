@@ -93,6 +93,8 @@ class ImuInteg {
 
     ImuBuffer imuBuf;
 
+    double tLastIntegrated;
+    
     // Odometry
 
     double tLastUpdate;

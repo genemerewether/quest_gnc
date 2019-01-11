@@ -37,7 +37,8 @@ ImuInteg::ImuInteg() :
     wParams(),
     dt(0.0),
     imuBuf(),
-    tLastUpdate(0),
+    tLastIntegrated(0.0),
+    tLastUpdate(0.0),
     x_w(0, 0, 0), w_R_b(Matrix3::Identity()),
     v_b(0, 0, 0), omega_b(0, 0, 0),
     b_R_g(Matrix3::Identity()),
@@ -197,7 +198,7 @@ int ImuInteg::
 
     // discard IMU samples from before last update
     while (this->imuBuf.size() &&
-           (tLastUpdate > this->imuBuf.getFirstIn()->t)) {
+           (this->tLastUpdate > this->imuBuf.getFirstIn()->t)) {
         this->imuBuf.remove();
     }
 
@@ -206,6 +207,14 @@ int ImuInteg::
     for (int i = 0; i < this->imuBuf.size(); i++) {
         const quest_gnc::ImuSample* imu = this->imuBuf.get(i);
         FW_ASSERT(imu != NULL);
+
+        // TODO(mereweth) - parameter for small time delta
+        if (imu->t < this->tLastIntegrated + 1e-6) {
+            continue;
+        }
+        
+        this->tLastIntegrated = imu->t;
+          
         // -------------------------- Rotation kinematics --------------------------
 
         this->omega_b = imu->omega_b - this->wBias;
