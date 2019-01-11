@@ -179,26 +179,40 @@ int LeeControl::
 }
 
 int LeeControl::
-  GetAngAccelCommand(Vector3* alpha_b__comm) {
+  GetAngAccelCommand(Vector3* alpha_b__comm,
+                     bool rpVelOnly,
+                     bool yawVelOnly) {
     FW_ASSERT(alpha_b__comm);
 
     Vector3 e_R;
     Vector3 e_omega;
     this->so3Error(&e_R, &e_omega);
 
-    // TODO(mereweth) - refactor hat operator as util
-    Matrix3 omega_b__hat;
-    omega_b__hat << 0, -this->omega_b.z(), this->omega_b.y(),
-                    this->omega_b.z(), 0, -this->omega_b.x(),
-                    -this->omega_b.y(), this->omega_b.x(), 0;
+    if (rpVelOnly) {
+        e_R(0) = 0;
+        e_R(1) = 0;
+    }
+    
+    if (yawVelOnly) {
+        e_R(2) = 0;
+    }
+
     *alpha_b__comm = e_R.cwiseProduct(this->k_R)
                      + e_omega.cwiseProduct(this->k_omega)
-                     + this->omega_b.cross(this->inertia * this->omega_b)
-                     - this->inertia * (omega_b__hat * this->w_R_b.transpose()
-                                        * this->w_R_b__des * this->omega_b__des
-                                        - this->w_R_b.transpose()
-                                          * this->w_R_b__des
-                                          * this->alpha_b__des);
+                     + this->omega_b.cross(this->inertia * this->omega_b);
+
+    if (!rpVelOnly && !yawVelOnly) {
+        // TODO(mereweth) - refactor hat operator as util
+        Matrix3 omega_b__hat;
+        omega_b__hat << 0, -this->omega_b.z(), this->omega_b.y(),
+                        this->omega_b.z(), 0, -this->omega_b.x(),
+                        -this->omega_b.y(), this->omega_b.x(), 0;
+        *alpha_b__comm -= this->inertia * (omega_b__hat * this->w_R_b.transpose()
+                                           * this->w_R_b__des * this->omega_b__des
+                                           - this->w_R_b.transpose()
+                                             * this->w_R_b__des
+                                             * this->alpha_b__des);
+    }
     // TODO(mereweth) - check that alpha_b__des == omega_b__des__dot
 
     return 0;
