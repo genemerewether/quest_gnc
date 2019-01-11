@@ -106,7 +106,9 @@ class LeeControl {
     int SetYawDes(FloatingPoint yaw_des);
 
     int SetAttitudeDes(const Quaternion& w_q_b__des,
-                       const Vector3& omega_b__des);
+                       const Vector3& omega_b__des,
+                       bool rpVelOnly = false,
+                       bool yawVelOnly = false);
 
     int SetAttitudeAngAccelDes(const Quaternion& w_q_b__des,
                                const Vector3& omega_b__des,
@@ -122,9 +124,11 @@ class LeeControl {
 
     // TODO(mereweth) - factor out into utils?
     // NOTE(mereweth) - uses, but does not modify, member variable
-    void so3Error(Vector3* e_R, Vector3* e_omega);
+    void so3Error(Vector3* e_R, Vector3* e_omega,
+                  bool rpVelOnly = false, bool yawVelOnly = false);
     
-    int saturateAngular(); // NOTE(mereweth) - updates member variable
+    int saturateAngular(bool rpVelOnly = false,
+                        bool yawVelOnly = false); // NOTE(mereweth) - updates member variable
     
     int saturateLinear(); // NOTE(mereweth) - updates member variable
 

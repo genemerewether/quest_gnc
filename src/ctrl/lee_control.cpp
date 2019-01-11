@@ -186,7 +186,8 @@ int LeeControl::
 
     Vector3 e_R;
     Vector3 e_omega;
-    this->so3Error(&e_R, &e_omega);
+    this->so3Error(&e_R, &e_omega,
+                   rpVelOnly, yawVelOnly);
 
     if (rpVelOnly) {
         e_R(0) = 0;
@@ -326,11 +327,13 @@ int LeeControl::
 
 int LeeControl::
   SetAttitudeDes(const Quaternion& w_q_b__des,
-                 const Vector3& omega_b__des) {  
+                 const Vector3& omega_b__des,
+                 bool rpVelOnly,
+                 bool yawVelOnly) {  
     this->w_R_b__des = w_q_b__des.toRotationMatrix();
     this->omega_b__des = omega_b__des;
 
-    return this->saturateAngular();
+    return this->saturateAngular(rpVelOnly, yawVelOnly);
 
     // TODO(mereweth) - sanitize inputs; return code
 }
@@ -379,7 +382,9 @@ void LeeControl::
 }
 
 void LeeControl::
-  so3Error(Vector3* e_R, Vector3* e_omega) {
+  so3Error(Vector3* e_R, Vector3* e_omega,
+           bool rpVelOnly,
+           bool yawVelOnly) {
     FW_ASSERT(e_R);
     FW_ASSERT(e_omega);
     // TODO(mereweth) - check skew-symmetric, refactor vee operator as util
@@ -389,15 +394,22 @@ void LeeControl::
                                             * this->w_R_b);
     *e_R = Vector3(e_R__hat(2, 1), e_R__hat(0, 2), e_R__hat(1, 0));
 
-    *e_omega = this->w_R_b.transpose() * this->w_R_b__des
-               * this->omega_b__des - this->omega_b;
+
+    if (rpVelOnly || yawVelOnly) {
+        *e_omega = this->omega_b__des - this->omega_b;
+    }
+    else {
+        *e_omega = this->w_R_b.transpose() * this->w_R_b__des
+                   * this->omega_b__des - this->omega_b;
+    }
 }
 
 int LeeControl::
-  saturateAngular() {
+  saturateAngular(bool rpVelOnly,
+                  bool yawVelOnly) {
     Vector3 e_R;
     Vector3 e_omega;
-    this->so3Error(&e_R, &e_omega);
+    this->so3Error(&e_R, &e_omega, rpVelOnly, yawVelOnly);
     
     DEBUG_PRINT("e_R [%f, %f, %f], sat_R [%f, %f, %f]\n",
                 this->e_R(0), this->e_R(1), this->e_R(2),
