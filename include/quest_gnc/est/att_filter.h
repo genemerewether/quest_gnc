@@ -15,8 +15,8 @@
 // countries or providing access to foreign persons.
 // ======================================================================
 
-#ifndef QUEST_GNC_INCLUDE_QUEST_GNC_EST_IMU_INTEG_H_
-#define QUEST_GNC_INCLUDE_QUEST_GNC_EST_IMU_INTEG_H_
+#ifndef QUEST_GNC_INCLUDE_QUEST_GNC_EST_ATT_FILTER_H_
+#define QUEST_GNC_INCLUDE_QUEST_GNC_EST_ATT_FILTER_H_
 
 #include <Eigen/Eigen>
 
@@ -27,17 +27,18 @@
 namespace quest_gnc {
 namespace estimation {
 
-class ImuInteg {
+class AttFilter {
  public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     typedef ringbuffer<ImuSample, 1000> ImuBuffer;
+    typedef ringbuffer<MagSample, 100> MagBuffer;
 
-    ImuInteg();
+    AttFilter();
 
-    ImuInteg(WorldParams wParams);
+    AttFilter(WorldParams wParams);
 
-    ~ImuInteg();
+    ~AttFilter();
 
   // ----------------------------------------------------------------------
   // Parameter and model setters
@@ -61,6 +62,8 @@ class ImuInteg {
   // ----------------------------------------------------------------------
 
     int AddImu(const ImuSample& imu);
+
+    int AddMag(const MagSample& mag);
 
     int SetUpdate(double tValid,
                   const Vector3& x_w,
@@ -94,6 +97,8 @@ class ImuInteg {
 
     ImuBuffer imuBuf;
 
+    MagBuffer magBuf;
+
     double tLastIntegrated;
     
     // Odometry
@@ -126,9 +131,11 @@ class ImuInteg {
     // Inverse of gyro scale and non-orthogonality estimate
     Matrix3 aAccInv;
 
-}; // class ImuInteg NOLINT()
+    // TODO (mereweth) - what is observable by high-level filter for magnetometer?
+
+}; // class AttFilter NOLINT()
 
 } // namespace estimation NOLINT()
 } // namespace quest_gnc NOLINT()
 
-#endif  // QUEST_GNC_INCLUDE_QUEST_GNC_EST_IMU_INTEG_H_
+#endif  // QUEST_GNC_INCLUDE_QUEST_GNC_EST_ATT_FILTER_H_

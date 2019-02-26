@@ -60,6 +60,12 @@ struct ImuSample {
     Vector3 a_b;
 };
 
+struct MagSample {
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    double t;
+    Vector3 m_b;
+};
+
 } // namespace quest_gnc NOLINT()
 
 #endif  // QUEST_GNC_INCLUDE_QUEST_GNC_UTILS_COMMON_H_
