@@ -44,7 +44,6 @@ AttFilter::AttFilter() :
     dt(0.0),
     imuBuf(),
     omega_b__prev(),
-    omega_b__bias(),
     magBuf(),
     tLastIntegrated(0.0),
     tLastUpdate(0.0),
@@ -282,12 +281,12 @@ int AttFilter::
             (fabs(imu->omega_b(0) - this->omega_b__prev(0)) <= this->omega_b__thresh) &&
             (fabs(imu->omega_b(1) - this->omega_b__prev(1)) <= this->omega_b__thresh) &&
             (fabs(imu->omega_b(2) - this->omega_b__prev(2)) <= this->omega_b__thresh)) {
-            this->omega_b__bias += this->biasAlpha * (imu->omega_b - this->omega_b__bias);
+            this->wBias += this->biasAlpha * (imu->omega_b - this->wBias);
         }
 
         this->omega_b__prev = imu->omega_b;
 
-        Vector3 omega_b__unbias = this->omega_b - this->omega_b__bias;
+        Vector3 omega_b__unbias = this->omega_b - this->wBias;
         Quaternion omega_b__pureQuat;
         omega_b__pureQuat.w() = 0.0;
         omega_b__pureQuat.x() = omega_b__unbias(0);
