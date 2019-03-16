@@ -16,7 +16,7 @@
 // ======================================================================
 
 
-#include "quest_gnc/est/imu_integ.h"
+#include "quest_gnc/est/att_filter.h"
 
 #include "quest_gnc/utils/so3.h"
 
@@ -33,20 +33,30 @@
 namespace quest_gnc {
 namespace estimation {
 
-ImuInteg::ImuInteg() :
+AttFilter::AttFilter() :
     wParams(),
+    accelThresh(0.0),
+    omega_b__deltaThresh(0.0),
+    omega_b__thresh(0.0),
+    biasAlpha(0.0),
+    accelGain(0.0),
+    initialized(false),
     dt(0.0),
     imuBuf(),
+    omega_b__prev(),
+    omega_b__bias(),
+    magBuf(),
     tLastIntegrated(0.0),
     tLastUpdate(0.0),
-    x_w(0, 0, 0), w_R_b(Matrix3::Identity()),
+    x_w(0, 0, 0),
+    b_q_w(Quaternion::Identity()),
     v_b(0, 0, 0), omega_b(0, 0, 0),
     b_R_g(Matrix3::Identity()),
     wBias(0, 0, 0), aBias(0, 0, 0),
     aGyrInv(Matrix3::Identity()), aAccInv(Matrix3::Identity()) {
 }
 
-ImuInteg::~ImuInteg() {
+AttFilter::~AttFilter() {
     // TODO(mereweth)
 }
 
@@ -54,14 +64,14 @@ ImuInteg::~ImuInteg() {
 // Parameter, model, and gain setters
 // ----------------------------------------------------------------------
 
-int ImuInteg::
+int AttFilter::
   SetWorldParams(WorldParams wParams) {
     this->wParams = wParams;
 
     return 0;
 }
 
-int ImuInteg::
+int AttFilter::
   SetTimeStep(FloatingPoint dt) {
     if (dt < 0.0) {
         return -1;
@@ -76,7 +86,7 @@ int ImuInteg::
 // Output getters
 // ----------------------------------------------------------------------
 
-int ImuInteg::
+int AttFilter::
   GetState(Vector3* x_w,
            Quaternion* w_q_b,
            Vector3* v_b,
@@ -87,8 +97,8 @@ int ImuInteg::
     FW_ASSERT(omega_b);
 
     *x_w = this->x_w;
-    *w_q_b = this->w_R_b;
-    w_q_b->normalize();
+    this->b_q_w.normalize();
+    *w_q_b = this->b_q_w.conjugate();
     *v_b = this->v_b;
     *omega_b = this->omega_b;
 
@@ -99,7 +109,7 @@ int ImuInteg::
 // Input setters
 // ----------------------------------------------------------------------
 
-int ImuInteg::
+int AttFilter::
   AddImu(const ImuSample& imu) {
     // could only happen with out-of-order IMU data
     if (imu.t < tLastUpdate) {
@@ -114,7 +124,22 @@ int ImuInteg::
     return this->imuBuf.queue(&imu);
 }
 
-int ImuInteg::
+int AttFilter::
+  AddMag(const MagSample& mag) {
+    // could only happen with out-of-order MAG data
+    if (mag.t < tLastUpdate) {
+        return -1;
+    }
+    // could only happen with out-of-order MAG data
+    if (this->magBuf.size() &&
+        (mag.t < this->magBuf.getLastIn()->t)) {
+        return -2;
+    }
+
+    return this->magBuf.queue(&mag);
+}
+
+int AttFilter::
   SetUpdate(double tValid,
             const Vector3& x_w,
             const Quaternion& w_q_b,
@@ -141,15 +166,15 @@ int ImuInteg::
     this->tLastUpdate = tValid;
     this->tLastIntegrated = tValid;
     this->x_w = x_w;
-    this->w_R_b = w_q_b.normalized().toRotationMatrix();
-    this->v_b = this->w_R_b.transpose() * v_w;
+    this->b_q_w = w_q_b.normalized().conjugate();
+    this->v_b = this->b_q_w * v_w;
     this->wBias = wBias;
     this->aBias = aBias;
 
     return 0;
 }
 
-int ImuInteg::
+int AttFilter::
   SetUpdate(double tValid,
             const Vector3& x_w,
             const Quaternion& w_q_b,
@@ -175,7 +200,7 @@ int ImuInteg::
 // Processing functions
 // ----------------------------------------------------------------------
 
-int ImuInteg::
+int AttFilter::
   PropagateState() {
     /* NOTE(mereweth) - can only discard IMU data once state update with time
      * stamp after the IMU data stamp has been received
@@ -185,11 +210,11 @@ int ImuInteg::
      */
 
     // start at head of ring buffer, go to tail
-    // for each IMU sample:
+    // for each sample:
         // peek at sample
         // if older than tLastUpdate, discard
         // optionally:
-            // add IMU sample to filter
+            // add sample to filter
             // pull latest filter element
         // optionally:
             // bump detection (based on vehicle model)
@@ -198,11 +223,18 @@ int ImuInteg::
         // offset by bias
         // TODO(mereweth) - check dt with exponential filter
 
-    // discard IMU samples from before last update
+    // discard samples from before last update
     while (this->imuBuf.size() &&
            (this->tLastUpdate > this->imuBuf.getFirstIn()->t)) {
         this->imuBuf.remove();
     }
+
+    while (this->magBuf.size() &&
+           (this->tLastUpdate > this->magBuf.getFirstIn()->t)) {
+        this->magBuf.remove();
+    }
+
+    //TODO(mereweth) - restructure to get earliest of mag & IMU
 
     // NOTE(mereweth) - need to keep all IMU samples since last update
     // in case another update from right after it comes in
@@ -216,25 +248,109 @@ int ImuInteg::
         }
         
         this->tLastIntegrated = imu->t;
-          
-        // -------------------------- Rotation kinematics --------------------------
 
-        this->omega_b = imu->omega_b - this->wBias;
-        const Vector3 omega_b__dt = this->dt * this->omega_b;
-        Matrix3 expMap;
-        expMap3(omega_b__dt, &expMap);
-        const Matrix3 w_R_b__temp = this->w_R_b * expMap;
+        Vector3 a_b__norm = imu->a_b;
+        a_b__norm.normalize();
+
+        // set initial orientation estimate from acceleration vector
+        if (!this->initialized) {
+            if (a_b__norm(2) >= 0.0) {
+                this->b_q_w.w() = sqrt((a_b__norm(2) + 1) * 0.5);
+                this->b_q_w.x() = -a_b__norm(1) / (2.0 * this->b_q_w.w());
+                this->b_q_w.y() = a_b__norm(0) / (2.0 * this->b_q_w.w());
+                this->b_q_w.z() = 0.0;
+            }
+            else {
+                FloatingPoint x = sqrt((1 - a_b__norm(2)) * 0.5);
+                this->b_q_w.w() = -a_b__norm(1) / (2.0 * x);
+                this->b_q_w.x() = x;
+                this->b_q_w.y() = 0.0;
+                this->b_q_w.z() = a_b__norm(0) / (2.0 * x);
+            }
+            this->omega_b__prev = imu->omega_b;
+            this->initialized = true;
+            return 0;
+        }
+
+        // check if in static state
+        if ((fabs(imu->a_b.norm() - this->wParams.gravityMag) <= this->accelThresh) &&
+
+            (fabs(imu->omega_b(0) - this->omega_b__prev(0)) <= this->omega_b__deltaThresh) &&
+            (fabs(imu->omega_b(1) - this->omega_b__prev(1)) <= this->omega_b__deltaThresh) &&
+            (fabs(imu->omega_b(2) - this->omega_b__prev(2)) <= this->omega_b__deltaThresh) &&
+
+            (fabs(imu->omega_b(0) - this->omega_b__prev(0)) <= this->omega_b__thresh) &&
+            (fabs(imu->omega_b(1) - this->omega_b__prev(1)) <= this->omega_b__thresh) &&
+            (fabs(imu->omega_b(2) - this->omega_b__prev(2)) <= this->omega_b__thresh)) {
+            this->omega_b__bias += this->biasAlpha * (imu->omega_b - this->omega_b__bias);
+        }
+
+        this->omega_b__prev = imu->omega_b;
+
+        Vector3 omega_b__unbias = this->omega_b - this->omega_b__bias;
+        Quaternion omega_b__pureQuat;
+        omega_b__pureQuat.w() = 0.0;
+        omega_b__pureQuat.x() = omega_b__unbias(0);
+        omega_b__pureQuat.y() = omega_b__unbias(1);
+        omega_b__pureQuat.z() = omega_b__unbias(2);
+        Quaternion b_q_w__pred = omega_b__pureQuat * this->b_q_w;
+        b_q_w__pred.coeffs() *= -0.5 * this->dt;
+        b_q_w__pred.coeffs() += this->b_q_w.coeffs();
+        b_q_w__pred.normalize();
+
+        Vector3 a_g__pred = this->b_q_w.conjugate() * imu->a_b;
+        Quaternion b_q_w__corr;
+        b_q_w__corr.w() = sqrt((a_g__pred(2) + 1) * 0.5);
+        b_q_w__corr.x() = -a_g__pred(1) / (2.0 * b_q_w__corr.w());
+        b_q_w__corr.y() = a_g__pred(0) / (2.0 * b_q_w__corr.w());
+        b_q_w__corr.z() = 0.0;
+        b_q_w__corr.normalize();
+
+        FloatingPoint factor;
+        {
+            FloatingPoint a_mag = imu->a_b.squaredNorm();
+            FloatingPoint error = fabs(a_mag - this->wParams.gravityMag) / this->wParams.gravityMag;
+            FloatingPoint errStaticThresh = 0.1;
+            FloatingPoint errDynamicThresh = 0.2;
+            FloatingPoint m = 1.0 / (errStaticThresh - errDynamicThresh);
+            FloatingPoint b = 1.0 - m * errStaticThresh;
+            if (error < errStaticThresh) {
+                factor = 1.0;
+            }
+            else if (error < errDynamicThresh) {
+                factor = m * error + b;
+            }
+            else {
+                factor = 0.0;
+            }
+        }
+
+        // Slerp (Spherical linear interpolation):
+        {
+            FloatingPoint angle = acos(b_q_w__corr.w());
+            FloatingPoint gain = factor * this->accelGain;
+            FloatingPoint A = sin(angle * (1.0 - gain)) / sin(angle);
+            FloatingPoint B = sin(angle * gain) / sin(angle);
+            b_q_w__corr.w() = A + B * b_q_w__corr.w();
+            b_q_w__corr.x() = B * b_q_w__corr.x();
+            b_q_w__corr.y() = B * b_q_w__corr.y();
+            b_q_w__corr.z() = B * b_q_w__corr.z();
+            b_q_w__corr.normalize();
+        }
 
         // -------------------------- Position kinematics --------------------------
 
-        const Vector3 a_b__temp = imu->a_b - this->aBias - this->w_R_b.transpose()
+        const Vector3 a_b__temp = imu->a_b - this->aBias - this->b_q_w
                                   * Vector3(0, 0, this->wParams.gravityMag);
 
         this->v_b += a_b__temp * this->dt;
-        this->x_w += this->w_R_b * this->v_b * this->dt;
+        this->x_w += this->b_q_w.conjugate() * this->v_b * this->dt;
 
-        this->w_R_b = w_R_b__temp;
-    }
+        // NOTE(mereweth) - store final result of attitude filter step after position kinematics
+        this->b_q_w = b_q_w__pred * b_q_w__corr;
+        this->b_q_w.normalize();
+
+    } // close for loop over buffered samples
 
     return 0;
 }

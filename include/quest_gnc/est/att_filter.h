@@ -92,10 +92,26 @@ class AttFilter {
     // Parameters
     WorldParams wParams;
 
+    FloatingPoint accelThresh;
+
+    FloatingPoint omega_b__deltaThresh;
+
+    FloatingPoint omega_b__thresh;
+
+    FloatingPoint biasAlpha;
+
+    FloatingPoint accelGain;
+
+    bool initialized;
+
     // Nominal dt
     FloatingPoint dt;
 
     ImuBuffer imuBuf;
+
+    Vector3 omega_b__prev;
+
+    Vector3 omega_b__bias;
 
     MagBuffer magBuf;
 
@@ -107,7 +123,7 @@ class AttFilter {
 
     Vector3 x_w;
 
-    Matrix3 w_R_b;
+    Quaternion b_q_w;
 
     Vector3 v_b;
 
