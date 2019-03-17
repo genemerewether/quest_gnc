@@ -48,6 +48,14 @@ class AttFilter {
     
     int SetTimeStep(FloatingPoint dt);
 
+    int SetSteadyStateThresh(FloatingPoint accelThresh,
+                             FloatingPoint omega_b__deltaThresh,
+                             FloatingPoint omega_b__thresh);
+
+    int SetAccelGain(FloatingPoint gain);
+
+    int SetBiasAlpha(FloatingPoint biasAlpha);
+
   // ----------------------------------------------------------------------
   // Output getters
   // ----------------------------------------------------------------------

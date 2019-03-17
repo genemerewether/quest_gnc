@@ -80,6 +80,45 @@ int AttFilter::
 
     return 0;
 }
+
+int AttFilter::
+  SetSteadyStateThresh(FloatingPoint accelThresh,
+                       FloatingPoint omega_b__deltaThresh,
+                       FloatingPoint omega_b__thresh) {
+    if ((accelThresh < 0.0)          ||
+        (omega_b__deltaThresh < 0.0) || 
+        (omega_b__thresh < 0.0))      {
+        return -1;
+    }
+
+    this->accelThresh = accelThresh;
+    this->omega_b__deltaThresh = omega_b__deltaThresh;
+    this->omega_b__thresh = omega_b__thresh;
+
+    return 0;
+}
+
+int AttFilter::
+  SetAccelGain(FloatingPoint gain) {
+    if ((gain < 0) || (gain > 1.0)) {
+        return -1;
+    }
+
+    this->accelGain = gain;
+
+    return 0;
+}
+
+int AttFilter::
+  SetBiasAlpha(FloatingPoint biasAlpha) {
+    if ((biasAlpha < 0) || (biasAlpha > 1.0)) {
+        return -1;
+    }
+
+    this->biasAlpha = biasAlpha;
+
+    return 0;
+}
   
 // ----------------------------------------------------------------------
 // Output getters
