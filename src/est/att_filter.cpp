@@ -317,9 +317,9 @@ int AttFilter::
             (fabs(imu->omega_b(1) - this->omega_b__prev(1)) <= this->omega_b__deltaThresh) &&
             (fabs(imu->omega_b(2) - this->omega_b__prev(2)) <= this->omega_b__deltaThresh) &&
 
-            (fabs(imu->omega_b(0) - this->omega_b__prev(0)) <= this->omega_b__thresh) &&
-            (fabs(imu->omega_b(1) - this->omega_b__prev(1)) <= this->omega_b__thresh) &&
-            (fabs(imu->omega_b(2) - this->omega_b__prev(2)) <= this->omega_b__thresh)) {
+            (fabs(imu->omega_b(0) - this->wBias(0)) <= this->omega_b__thresh) &&
+            (fabs(imu->omega_b(1) - this->wBias(1)) <= this->omega_b__thresh) &&
+            (fabs(imu->omega_b(2) - this->wBias(2)) <= this->omega_b__thresh)) {
             this->wBias += this->biasAlpha * (imu->omega_b - this->wBias);
         }
 
