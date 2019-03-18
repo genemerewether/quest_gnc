@@ -325,7 +325,7 @@ int AttFilter::
 
         this->omega_b__prev = imu->omega_b;
 
-        Vector3 omega_b__unbias = this->omega_b - this->wBias;
+        Vector3 omega_b__unbias = imu->omega_b - this->wBias;
         Quaternion omega_b__pureQuat;
         omega_b__pureQuat.w() = 0.0;
         omega_b__pureQuat.x() = omega_b__unbias(0);
@@ -334,7 +334,24 @@ int AttFilter::
         Quaternion b_q_w__pred = omega_b__pureQuat * this->b_q_w;
         b_q_w__pred.coeffs() *= -0.5 * this->dt;
         b_q_w__pred.coeffs() += this->b_q_w.coeffs();
-        b_q_w__pred.normalize();
+        /*Quaternion b_q_w__pred;
+	b_q_w__pred.w() = this->b_q_w.w() + 0.5 * this->dt *
+	  (omega_b__unbias(0) * this->b_q_w.x()
+	   + omega_b__unbias(1) * this->b_q_w.y()
+	   + omega_b__unbias(2) * this->b_q_w.z());
+	b_q_w__pred.x() = this->b_q_w.x() + 0.5 * this->dt *
+	  (-omega_b__unbias(0) * this->b_q_w.w()
+	   - omega_b__unbias(1) * this->b_q_w.z()
+	   + omega_b__unbias(2) * this->b_q_w.y());
+	b_q_w__pred.y() = this->b_q_w.y() + 0.5 * this->dt *
+	  (omega_b__unbias(0) * this->b_q_w.z()
+	   - omega_b__unbias(1) * this->b_q_w.w()
+	   - omega_b__unbias(2) * this->b_q_w.x());
+	b_q_w__pred.z() = this->b_q_w.z() + 0.5 * this->dt *
+	  (-omega_b__unbias(0) * this->b_q_w.y()
+	   + omega_b__unbias(1) * this->b_q_w.x()
+	   - omega_b__unbias(2) * this->b_q_w.w());
+        b_q_w__pred.normalize();*/
 
         Vector3 a_g__pred = this->b_q_w.conjugate() * imu->a_b;
         Quaternion b_q_w__corr;
