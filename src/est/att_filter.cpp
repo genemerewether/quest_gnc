@@ -26,8 +26,11 @@
 
 //#define DEBUG_PRINT(x,...)
 
-#ifndef DEBUG_PRINT
-#define DEBUG_PRINT(x,...) printf(x,##__VA_ARGS__)
+#ifdef BUILD_DSPAL
+#include <HAP_farf.h>
+#define DEBUG_PRINT(x,...) FARF(ALWAYS,x,##__VA_ARGS__);
+#else
+#define DEBUG_PRINT(x,...) printf(x,##__VA_ARGS__); fflush(stdout)
 #endif
 
 namespace quest_gnc {
@@ -63,6 +66,24 @@ AttFilter::~AttFilter() {
 // Parameter, model, and gain setters
 // ----------------------------------------------------------------------
 
+int AttFilter::
+  Reinit() {
+    this->initialized = false;
+
+    this->omega_b__prev << 0.0f, 0.0f, 0.0f;
+    
+    this->x_w << 0.0f, 0.0f, 0.0f;
+    this->b_q_w = Quaternion::Identity();
+    this->v_b << 0.0f, 0.0f, 0.0f;
+    this->omega_b << 0.0f, 0.0f, 0.0f;
+
+    this->wBias << 0.0f, 0.0f, 0.0f;
+
+    DEBUG_PRINT("reinit att_filter\n");
+  
+    return 0;
+}
+  
 int AttFilter::
   SetWorldParams(WorldParams wParams) {
     this->wParams = wParams;
@@ -139,6 +160,8 @@ int AttFilter::
     *w_q_b = this->b_q_w.conjugate();
     *v_b = this->v_b;
     *omega_b = this->omega_b;
+    
+    //DEBUG_PRINT("GetState att_filter\n");
 
     return 0;
 }
@@ -158,6 +181,8 @@ int AttFilter::
         (imu.t < this->imuBuf.getLastIn()->t)) {
         return -2;
     }
+    
+    //DEBUG_PRINT("AddImu att_filter\n");
 
     return this->imuBuf.queue(&imu);
 }
@@ -208,6 +233,8 @@ int AttFilter::
     this->v_b = this->b_q_w * v_w;
     this->wBias = wBias;
     this->aBias = aBias;
+    
+    //DEBUG_PRINT("SetUpdate att_filter\n");
 
     return 0;
 }
@@ -261,6 +288,8 @@ int AttFilter::
         // offset by bias
         // TODO(mereweth) - check dt with exponential filter
 
+    //DEBUG_PRINT("PropagateState att_filter\n");
+    
     // discard samples from before last update
     while (this->imuBuf.size() &&
            (this->tLastUpdate > this->imuBuf.getFirstIn()->t)) {
@@ -287,8 +316,7 @@ int AttFilter::
         
         this->tLastIntegrated = imu->t;
 
-        Vector3 a_b__norm = imu->a_b;
-        a_b__norm.normalize();
+        const Vector3 a_b__norm = imu->a_b.normalized();
 
         // set initial orientation estimate from acceleration vector
         if (!this->initialized) {
@@ -299,7 +327,7 @@ int AttFilter::
                 this->b_q_w.z() = 0.0;
             }
             else {
-                FloatingPoint x = sqrt((1 - a_b__norm(2)) * 0.5);
+                const FloatingPoint x = sqrt((1 - a_b__norm(2)) * 0.5);
                 this->b_q_w.w() = -a_b__norm(1) / (2.0 * x);
                 this->b_q_w.x() = x;
                 this->b_q_w.y() = 0.0;
@@ -325,7 +353,9 @@ int AttFilter::
 
         this->omega_b__prev = imu->omega_b;
 
-        Vector3 omega_b__unbias = imu->omega_b - this->wBias;
+        const Vector3 omega_b__unbias = imu->omega_b - this->wBias;
+	// store unbiased angular velocity for odometry
+	this->omega_b = omega_b__unbias;
         Quaternion omega_b__pureQuat;
         omega_b__pureQuat.w() = 0.0;
         omega_b__pureQuat.x() = omega_b__unbias(0);
@@ -334,41 +364,34 @@ int AttFilter::
         Quaternion b_q_w__pred = omega_b__pureQuat * this->b_q_w;
         b_q_w__pred.coeffs() *= -0.5 * this->dt;
         b_q_w__pred.coeffs() += this->b_q_w.coeffs();
-        /*Quaternion b_q_w__pred;
-	b_q_w__pred.w() = this->b_q_w.w() + 0.5 * this->dt *
-	  (omega_b__unbias(0) * this->b_q_w.x()
-	   + omega_b__unbias(1) * this->b_q_w.y()
-	   + omega_b__unbias(2) * this->b_q_w.z());
-	b_q_w__pred.x() = this->b_q_w.x() + 0.5 * this->dt *
-	  (-omega_b__unbias(0) * this->b_q_w.w()
-	   - omega_b__unbias(1) * this->b_q_w.z()
-	   + omega_b__unbias(2) * this->b_q_w.y());
-	b_q_w__pred.y() = this->b_q_w.y() + 0.5 * this->dt *
-	  (omega_b__unbias(0) * this->b_q_w.z()
-	   - omega_b__unbias(1) * this->b_q_w.w()
-	   - omega_b__unbias(2) * this->b_q_w.x());
-	b_q_w__pred.z() = this->b_q_w.z() + 0.5 * this->dt *
-	  (-omega_b__unbias(0) * this->b_q_w.y()
-	   + omega_b__unbias(1) * this->b_q_w.x()
-	   - omega_b__unbias(2) * this->b_q_w.w());
-        b_q_w__pred.normalize();*/
+        b_q_w__pred.normalize();
 
-        Vector3 a_g__pred = this->b_q_w.conjugate() * imu->a_b;
+        const Vector3 a_g__pred = this->b_q_w.conjugate() * imu->a_b;
         Quaternion b_q_w__corr;
-        b_q_w__corr.w() = sqrt((a_g__pred(2) + 1) * 0.5);
-        b_q_w__corr.x() = -a_g__pred(1) / (2.0 * b_q_w__corr.w());
-        b_q_w__corr.y() = a_g__pred(0) / (2.0 * b_q_w__corr.w());
-        b_q_w__corr.z() = 0.0;
+	
+	if (a_g__pred(2) >= 0.0) {
+	    b_q_w__corr.w() = sqrt((a_g__pred(2) + 1) * 0.5);
+	    b_q_w__corr.x() = -a_g__pred(1) / (2.0 * b_q_w__corr.w());
+	    b_q_w__corr.y() = a_g__pred(0) / (2.0 * b_q_w__corr.w());
+	    b_q_w__corr.z() = 0.0;
+	}
+	else {
+	    const FloatingPoint x = sqrt((1 - a_g__pred(2)) * 0.5);
+	    b_q_w__corr.w() = -a_g__pred(1) / (2.0 * x);
+	    b_q_w__corr.x() = x;
+	    b_q_w__corr.y() = 0.0;
+	    b_q_w__corr.z() = a_g__pred(0) / (2.0 * x);
+	}
         b_q_w__corr.normalize();
 
         FloatingPoint factor;
         {
-            FloatingPoint a_mag = imu->a_b.squaredNorm();
-            FloatingPoint error = fabs(a_mag - this->wParams.gravityMag) / this->wParams.gravityMag;
-            FloatingPoint errStaticThresh = 0.1;
-            FloatingPoint errDynamicThresh = 0.2;
-            FloatingPoint m = 1.0 / (errStaticThresh - errDynamicThresh);
-            FloatingPoint b = 1.0 - m * errStaticThresh;
+            const FloatingPoint a_mag = imu->a_b.squaredNorm();
+            const FloatingPoint error = fabs(a_mag - this->wParams.gravityMag) / this->wParams.gravityMag;
+            const FloatingPoint errStaticThresh = 0.1;
+            const FloatingPoint errDynamicThresh = 0.2;
+            const FloatingPoint m = 1.0 / (errStaticThresh - errDynamicThresh);
+            const FloatingPoint b = 1.0 - m * errStaticThresh;
             if (error < errStaticThresh) {
                 factor = 1.0;
             }
@@ -382,10 +405,22 @@ int AttFilter::
 
         // Slerp (Spherical linear interpolation):
         {
-            FloatingPoint angle = acos(b_q_w__corr.w());
-            FloatingPoint gain = factor * this->accelGain;
-            FloatingPoint A = sin(angle * (1.0 - gain)) / sin(angle);
-            FloatingPoint B = sin(angle * gain) / sin(angle);
+	    if ((b_q_w__corr.w() > 1.0) ||
+		(b_q_w__corr.w() < -1.0)) {
+	        DEBUG_PRINT("fabs(b_q_w__corr.w()) > 1.0 in att_filter slerp");
+  	        this->Reinit();
+		return -1;
+	    }
+            const FloatingPoint angle = acos(b_q_w__corr.w());
+	    const FloatingPoint sinAngle = fabs(sin(angle));
+	    if (sinAngle < 1e-9) {
+	        DEBUG_PRINT("fabs(sin(angle)) small in att_filter slerp");
+  	        this->Reinit();
+		return -1;
+	    }
+            const FloatingPoint gain = factor * this->accelGain;
+            const FloatingPoint A = sin(angle * (1.0 - gain)) / sinAngle;
+            const FloatingPoint B = sin(angle * gain) / sinAngle;
             b_q_w__corr.w() = A + B * b_q_w__corr.w();
             b_q_w__corr.x() = B * b_q_w__corr.x();
             b_q_w__corr.y() = B * b_q_w__corr.y();

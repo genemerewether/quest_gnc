@@ -44,6 +44,8 @@ class AttFilter {
   // Parameter and model setters
   // ----------------------------------------------------------------------
 
+    int Reinit();
+    
     int SetWorldParams(WorldParams wParams);
     
     int SetTimeStep(FloatingPoint dt);
@@ -118,8 +120,6 @@ class AttFilter {
     ImuBuffer imuBuf;
 
     Vector3 omega_b__prev;
-
-    Vector3 omega_b__bias;
 
     MagBuffer magBuf;
 
