@@ -24,13 +24,15 @@
 
 #include <math.h>
 
-//#define DEBUG_PRINT(x,...)
+#define DEBUG_PRINT(x,...)
 
+#ifndef DEBUG_PRINT
 #ifdef BUILD_DSPAL
 #include <HAP_farf.h>
 #define DEBUG_PRINT(x,...) FARF(ALWAYS,x,##__VA_ARGS__);
 #else
 #define DEBUG_PRINT(x,...) printf(x,##__VA_ARGS__); fflush(stdout)
+#endif
 #endif
 
 namespace quest_gnc {
