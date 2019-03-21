@@ -26,17 +26,22 @@
 //#include "quest_gnc/utils/world_params.h"
 
 #include "quest_gnc/utils/common.h"
+#include "quest_gnc/mixer/basic_mixer_cfg.h"
 
 namespace quest_gnc {
 namespace multirotor {
 
+typedef Eigen::Matrix<FloatingPoint, kBasicMixerMaxActuators, 4> PinvMixMatrix;
+typedef Eigen::Matrix<FloatingPoint, 4, kBasicMixerMaxActuators> MixMatrix;
+typedef Eigen::Matrix<FloatingPoint, kBasicMixerMaxActuators, 1> MixOutput;
+  
 class BasicMixer {
  public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     BasicMixer();
 
-    BasicMixer(Eigen::MatrixXd mixer);
+    BasicMixer(MixMatrix mixer);
 
     ~BasicMixer();
 
@@ -45,13 +50,13 @@ class BasicMixer {
   // ----------------------------------------------------------------------
 
   // Will calculate pinv of mixer
-    int SetMixer(Eigen::MatrixXd mixer);
-
+    int SetMixer(MixMatrix mixer);
+    
   // ----------------------------------------------------------------------
   // Rotational velocity command
   // ----------------------------------------------------------------------
 
-    int GetRotorVelCommand(Eigen::VectorXd* rotVel__comm);
+    int GetRotorVelCommand(MixOutput* rotVel__comm);
 
   // ----------------------------------------------------------------------
   // Torque/moment setter
@@ -63,7 +68,7 @@ class BasicMixer {
  private:
     // Parameters
 
-    Eigen::MatrixXd mixerPinv;
+    PinvMixMatrix mixerPinv;
 
     // Commanded
 
@@ -77,4 +82,4 @@ class BasicMixer {
 } // namespace multirotor NOLINT()
 } // namespace quest_gnc NOLINT()
 
-#endif  // QUEST_GNC_INCLUDE_QUEST_GNC_CTRL_BASIC_MIXER_H_
+#endif  // QUEST_GNC_INCLUDE_QUEST_GNC_MIXER_BASIC_MIXER_H_

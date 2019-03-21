@@ -38,7 +38,7 @@ BasicMixer::~BasicMixer() {
 // ----------------------------------------------------------------------
 
 int BasicMixer::
-  SetMixer(Eigen::MatrixXd mixer) {
+  SetMixer(MixMatrix mixer) {
 
     // TODO(mgardine) - use return code here if matrix inversion fails?
 
@@ -48,13 +48,13 @@ int BasicMixer::
 
     return 0;
 }
-
+  
 // ----------------------------------------------------------------------
 // Thrust and moment getters
 // ----------------------------------------------------------------------
 
 int BasicMixer::
-  GetRotorVelCommand(Eigen::VectorXd* rotVel__comm) {
+  GetRotorVelCommand(MixOutput* rotVel__comm) {
     FW_ASSERT(rotVel__comm);
 
     const Eigen::Vector4d controls(this->moment_b__des(0),
@@ -64,7 +64,7 @@ int BasicMixer::
 
     *rotVel__comm = this->mixerPinv * controls;
     *rotVel__comm = rotVel__comm->cwiseMax(
-                      Eigen::VectorXd::Zero(rotVel__comm->rows()));
+                      MixOutput::Zero(rotVel__comm->rows()));
     *rotVel__comm = rotVel__comm->cwiseSqrt();
 
     return 0;
