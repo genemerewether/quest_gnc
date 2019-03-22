@@ -19,8 +19,19 @@
 
 #include "Eigen/Geometry"
 
+#include <iostream>
+
+#include <stdio.h>
 #define DEBUG_PRINT(x,...)
-//#define DEBUG_PRINT(x,...) printf(x,##__VA_ARGS__)
+
+#ifndef DEBUG_PRINT
+#ifdef BUILD_DSPAL
+#include <HAP_farf.h>
+#define DEBUG_PRINT(x,...) FARF(ALWAYS,x,##__VA_ARGS__);
+#else
+#define DEBUG_PRINT(x,...) printf(x,##__VA_ARGS__); fflush(stdout)
+#endif
+#endif
 
 namespace quest_gnc {
 namespace multirotor {
@@ -38,10 +49,19 @@ BasicMixer::~BasicMixer() {
 // ----------------------------------------------------------------------
 
 int BasicMixer::
-  SetMixer(MixMatrix mixer) {
+  SetMixer(MixMatrix mixer,
+  	   unsigned int numActuators) {
 
     // TODO(mgardine) - use return code here if matrix inversion fails?
 
+    if (numActuators > kBasicMixerMaxActuators) {
+        return -1;
+    }
+    
+    if (numActuators < kBasicMixerMaxActuators) {
+        mixer.rightCols(kBasicMixerMaxActuators - numActuators).setZero();
+    }
+    
     this->mixerPinv =
       mixer.transpose() *
       (mixer * mixer.transpose()).inverse();

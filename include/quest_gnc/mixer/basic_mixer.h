@@ -41,7 +41,8 @@ class BasicMixer {
 
     BasicMixer();
 
-    BasicMixer(MixMatrix mixer);
+    BasicMixer(MixMatrix mixer,
+	       unsigned int numActuators);
 
     ~BasicMixer();
 
@@ -50,7 +51,8 @@ class BasicMixer {
   // ----------------------------------------------------------------------
 
   // Will calculate pinv of mixer
-    int SetMixer(MixMatrix mixer);
+    int SetMixer(MixMatrix mixer,
+		 unsigned int numActuators);
     
   // ----------------------------------------------------------------------
   // Rotational velocity command

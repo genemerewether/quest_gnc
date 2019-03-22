@@ -24,6 +24,7 @@
 
 #include <math.h>
 
+#include <stdio.h>
 #define DEBUG_PRINT(x,...)
 
 #ifndef DEBUG_PRINT
