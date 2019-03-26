@@ -111,7 +111,8 @@ class LeeControl {
     int SetAttitudeDes(const Quaternion& w_q_b__des,
                        const Vector3& omega_b__des,
                        bool rpVelOnly = false,
-                       bool yawVelOnly = false);
+                       bool yawVelOnly = false,
+		       bool doSaturation = true);
 
     int SetAttitudeAngAccelDes(const Quaternion& w_q_b__des,
                                const Vector3& omega_b__des,

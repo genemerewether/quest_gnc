@@ -333,11 +333,17 @@ int LeeControl::
   SetAttitudeDes(const Quaternion& w_q_b__des,
                  const Vector3& omega_b__des,
                  bool rpVelOnly,
-                 bool yawVelOnly) {  
+                 bool yawVelOnly,
+		 bool doSaturation) {  
     this->w_R_b__des = w_q_b__des.toRotationMatrix();
     this->omega_b__des = omega_b__des;
 
-    return this->saturateAngular(rpVelOnly, yawVelOnly);
+    if (doSaturation) {
+        return this->saturateAngular(rpVelOnly, yawVelOnly);
+    }
+    else {
+        return 0;
+    }
 
     // TODO(mereweth) - sanitize inputs; return code
 }
