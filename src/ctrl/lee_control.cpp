@@ -212,7 +212,7 @@ int LeeControl::
     Matrix3 nuller = Matrix3::Identity();
     getUnitAngleNuller(&nuller, toNull, ~mask);
     const Matrix3 nulled = nuller * toNull;
-    const Matrix3 e_R__hat = 0.5 * (toNull - toNull.transpose());
+    const Matrix3 e_R__hat = 0.5 * (nulled - nulled.transpose());
     Vector3 e_R;
     vee3(&e_R, e_R__hat);
     *alpha_b__comm = e_R.cwiseProduct(this->k_R);
