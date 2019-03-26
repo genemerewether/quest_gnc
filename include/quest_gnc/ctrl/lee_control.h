@@ -77,8 +77,8 @@ class LeeControl {
                            bool rpVelOnly = false,
                            bool yawVelOnly = false);
 
-    int GetAngAxisByAxisCommand(Vector3* alpha_b__comm,
-				unsigned char mask);
+    int GetAngAxisAlignedCommand(Vector3* alpha_b__comm,
+			  	 unsigned char mask);
 
   // ----------------------------------------------------------------------
   // Feedback setters

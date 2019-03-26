@@ -95,15 +95,19 @@ inline int getUnitAngle(FloatingPoint *angle,
 	rotProjUnit = Vector3::UnitX();
 	checkAxis = 2;
     }
-    if (1 == axis) {
+    else if (1 == axis) {
 	rotUnit = Vector3::UnitZ();
 	rotProjUnit = Vector3::UnitY();
 	checkAxis = 0;
     }
-    if (2 == axis) {
+    else if (2 == axis) {
 	rotUnit = Vector3::UnitX();
 	rotProjUnit = Vector3::UnitZ();
 	checkAxis = 1;
+    }
+    else {
+        *angle = 0.0;
+        return -1;
     }
     rot = m * rotUnit;	
     rotProj = rot - rot.dot(rotProjUnit) * rotProjUnit;
@@ -112,29 +116,8 @@ inline int getUnitAngle(FloatingPoint *angle,
     if (rotProj(checkAxis) < 0.0) {
 	*angle *= -1.0;
     }
-}
 
-inline int getUnitAngleNuller(Matrix3 *out,
-			      const Matrix3& m,
-			      unsigned char mask) {
-    FW_ASSERT(out);
-
-    *out = Matrix3::Identity();
-    for (unsigned int i = 0; i < 3; i++) {	
-        if (mask & (1 << i)) {
-  	    FloatingPoint angle;
-	    getUnitAngle(&angle, m, i);	    
-	    if (0 == i) {
-	        *out = *out * AngleAxis(-angle, Vector3::UnitX());
-	    }
-	    if (1 == i) {
-	        *out = *out * AngleAxis(-angle, Vector3::UnitY());
-	    }
-	    if (2 == i) {
-	        *out = *out * AngleAxis(-angle, Vector3::UnitZ());
-	    }
-	}
-    }
+    return 0;
 }
 
 } // namespace quest_gnc NOLINT()

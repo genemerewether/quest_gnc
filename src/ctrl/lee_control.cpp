@@ -204,20 +204,16 @@ int LeeControl::
 }
 
 int LeeControl::
-  GetAngAxisByAxisCommand(Vector3* alpha_b__comm,
-  			  unsigned char mask) {    
+  GetAngAxisAlignedCommand(Vector3* alpha_b__comm,
+			   unsigned char mask) {
     Vector3 e_omega = this->omega_b__des - this->omega_b;
-    const Matrix3 toNull = this->w_R_b.transpose() * this->w_R_b__des;
-    // null out all axes not active
-    Matrix3 nuller = Matrix3::Identity();
-    getUnitAngleNuller(&nuller, toNull, ~mask);
-    const Matrix3 nulled = nuller * toNull;
-    const Matrix3 e_R__hat = 0.5 * (nulled - nulled.transpose());
-    Vector3 e_R;
-    vee3(&e_R, e_R__hat);
-    *alpha_b__comm = e_R.cwiseProduct(this->k_R);
+    const Matrix3 w_R_b__err = this->w_R_b.transpose() * this->w_R_b__des;
     for (unsigned int i = 0; i < 3; i++) {
+        (*alpha_b__comm)(i) = 0.0;
         if (mask & (1 << i)) {
+  	    FloatingPoint angle = 0.0;
+	    getUnitAngle(&angle, w_R_b__err, i);
+	    (*alpha_b__comm)(i) += angle * this->k_R(i);
 	    (*alpha_b__comm)(i) += e_omega(i) * this->k_omega(i);
 	}
     }
