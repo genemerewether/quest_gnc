@@ -202,6 +202,28 @@ int LeeControl::
 
     // TODO(mereweth) - sanitize inputs; return code
 }
+
+int LeeControl::
+  GetAngAxisByAxisCommand(Vector3* alpha_b__comm,
+  			  unsigned char mask) {    
+    Vector3 e_omega = this->omega_b__des - this->omega_b;
+    const Matrix3 toNull = this->w_R_b.transpose() * this->w_R_b__des;
+    // null out all axes not active
+    Matrix3 nuller = Matrix3::Identity();
+    getUnitAngleNuller(&nuller, toNull, ~mask);
+    const Matrix3 nulled = nuller * toNull;
+    const Matrix3 e_R__hat = 0.5 * (toNull - toNull.transpose());
+    Vector3 e_R;
+    vee3(&e_R, e_R__hat);
+    *alpha_b__comm = e_R.cwiseProduct(this->k_R);
+    for (unsigned int i = 0; i < 3; i++) {
+        if (mask & (1 << i)) {
+	    (*alpha_b__comm)(i) += e_omega(i) * this->k_omega(i);
+	}
+    }
+    
+    return 0;
+}
   
 // ----------------------------------------------------------------------
 // Feedback setters
@@ -217,7 +239,7 @@ int LeeControl::
     this->v_b = v_b;
     this->omega_b = omega_b;
 
-    this->updateYaw();
+    getUnitAngle(&this->yaw, this->w_R_b, 2);
     return 0;
 
     // TODO(mereweth) - sanitize inputs; return code
@@ -229,7 +251,7 @@ int LeeControl::
     this->w_R_b = w_q_b.toRotationMatrix();    
     this->omega_b = omega_b;
 
-    this->updateYaw();
+    getUnitAngle(&this->yaw, this->w_R_b, 2);
     return 0;
 
     // TODO(mereweth) - sanitize inputs; return code
@@ -350,19 +372,6 @@ int LeeControl::
 // Private helper functions
 // ----------------------------------------------------------------------
   
-// TODO(mereweth) - share in utils?
-void LeeControl::
-  updateYaw() {
-    Vector3 xRot = Vector3::UnitX();
-    xRot = this->w_R_b * xRot;
-    Vector3 xRotProj = xRot - xRot.dot(Vector3::UnitZ()) * Vector3::UnitZ();
-    xRotProj.normalize();
-    this->yaw = acos(xRotProj.dot(Vector3::UnitX()));
-    if (xRotProj(1) < 0.0) {
-        this->yaw *= -1.0;
-    }
-}
-
 void LeeControl::
   so3Error(Vector3* e_R, Vector3* e_omega,
            bool rpVelOnly,

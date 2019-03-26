@@ -77,6 +77,9 @@ class LeeControl {
                            bool rpVelOnly = false,
                            bool yawVelOnly = false);
 
+    int GetAngAxisByAxisCommand(Vector3* alpha_b__comm,
+				unsigned char mask);
+
   // ----------------------------------------------------------------------
   // Feedback setters
   // ----------------------------------------------------------------------
@@ -119,9 +122,6 @@ class LeeControl {
                                const Vector3& alpha_b__des);
 
  private:
-    // TODO(mereweth) - factor out into utils?
-    void updateYaw(); // NOTE(mereweth) - updates member variable
-
     // TODO(mereweth) - factor out into utils?
     // NOTE(mereweth) - uses, but does not modify, member variable
     void so3Error(Vector3* e_R, Vector3* e_omega,

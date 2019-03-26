@@ -83,6 +83,60 @@ inline int expMap3(const Vector3& v, Matrix3* m) {
     return 0;
 }
 
+inline int getUnitAngle(FloatingPoint *angle,
+			const Matrix3& m,
+			unsigned char axis) {
+    FW_ASSERT(angle);
+    
+    Vector3 rot, rotProj, rotUnit, rotProjUnit;
+    unsigned char checkAxis;
+    if (0 == axis) {
+	rotUnit = Vector3::UnitY();
+	rotProjUnit = Vector3::UnitX();
+	checkAxis = 2;
+    }
+    if (1 == axis) {
+	rotUnit = Vector3::UnitZ();
+	rotProjUnit = Vector3::UnitY();
+	checkAxis = 0;
+    }
+    if (2 == axis) {
+	rotUnit = Vector3::UnitX();
+	rotProjUnit = Vector3::UnitZ();
+	checkAxis = 1;
+    }
+    rot = m * rotUnit;	
+    rotProj = rot - rot.dot(rotProjUnit) * rotProjUnit;
+    rotProj.normalize();
+    *angle = acos(rotProj.dot(rotUnit));
+    if (rotProj(checkAxis) < 0.0) {
+	*angle *= -1.0;
+    }
+}
+
+inline int getUnitAngleNuller(Matrix3 *out,
+			      const Matrix3& m,
+			      unsigned char mask) {
+    FW_ASSERT(out);
+
+    *out = Matrix3::Identity();
+    for (unsigned int i = 0; i < 3; i++) {	
+        if (mask & (1 << i)) {
+  	    FloatingPoint angle;
+	    getUnitAngle(&angle, m, i);	    
+	    if (0 == i) {
+	        *out = *out * AngleAxis(-angle, Vector3::UnitX());
+	    }
+	    if (1 == i) {
+	        *out = *out * AngleAxis(-angle, Vector3::UnitY());
+	    }
+	    if (2 == i) {
+	        *out = *out * AngleAxis(-angle, Vector3::UnitZ());
+	    }
+	}
+    }
+}
+
 } // namespace quest_gnc NOLINT()
 
 #endif  // QUEST_GNC_INCLUDE_QUEST_GNC_UTILS_SO3_H_
