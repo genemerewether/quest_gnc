@@ -15,23 +15,20 @@
 // countries or providing access to foreign persons.
 // ======================================================================
 
+#include "quest_gnc/utils/common.h"
+
+#include <pybind11/eigen.h>
 #include <pybind11/pybind11.h>
 namespace py = pybind11;
 
-void rates_bind(py::module &);
-void body_frame_bind(py::module &);
-void lee_control_bind(py::module &);
-void imu_integ_bind(py::module &);
-void att_filter_bind(py::module &);
-void signal_gen_bind(py::module &);
-void common_bind(py::module &);
+using namespace quest_gnc;
+using namespace pybind11::literals; // NOLINT()
 
-PYBIND11_MODULE(quest_gncpy, m) {
-  rates_bind(m);
-  body_frame_bind(m);
-  lee_control_bind(m);
-  imu_integ_bind(m);
-  att_filter_bind(m);
-  signal_gen_bind(m);
-  common_bind(m);
+void common_bind(py::module &m) { // NOLINT()
+  py::class_<ImuSample>(m, "ImuSample")
+      .def(py::init<>())
+
+      .def_readwrite("t", &ImuSample::t)
+      .def_readwrite("omega_b", &ImuSample::omega_b)
+      .def_readwrite("a_b", &ImuSample::a_b);
 }
