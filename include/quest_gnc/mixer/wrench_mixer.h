@@ -15,8 +15,8 @@
 // countries or providing access to foreign persons.
 // ======================================================================
 
-#ifndef QUEST_GNC_INCLUDE_QUEST_GNC_MIXER_BASIC_MIXER_H_
-#define QUEST_GNC_INCLUDE_QUEST_GNC_MIXER_BASIC_MIXER_H_
+#ifndef QUEST_GNC_INCLUDE_QUEST_GNC_MIXER_WRENCH_MIXER_H_
+#define QUEST_GNC_INCLUDE_QUEST_GNC_MIXER_WRENCH_MIXER_H_
 
 #include <Eigen/Eigen>
 
@@ -26,26 +26,26 @@
 //#include "quest_gnc/utils/world_params.h"
 
 #include "quest_gnc/utils/common.h"
-#include "quest_gnc/mixer/basic_mixer_cfg.h"
+#include "quest_gnc/mixer/wrench_mixer_cfg.h"
 
 namespace quest_gnc {
 namespace multirotor {
   
-class BasicMixer {
+class WrenchMixer {
  public:
 
-    typedef Eigen::Matrix<FloatingPoint, kBasicMixerMaxActuators, 4> PinvMixMatrix;
-    typedef Eigen::Matrix<FloatingPoint, 4, kBasicMixerMaxActuators> MixMatrix;
-    typedef Eigen::Matrix<FloatingPoint, kBasicMixerMaxActuators, 1> MixOutput;
+    typedef Eigen::Matrix<FloatingPoint, kWrenchMixerMaxActuators, 6> PinvMixMatrix;
+    typedef Eigen::Matrix<FloatingPoint, 6, kWrenchMixerMaxActuators> MixMatrix;
+    typedef Eigen::Matrix<FloatingPoint, kWrenchMixerMaxActuators, 1> MixOutput;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    BasicMixer();
+    WrenchMixer();
 
-    BasicMixer(MixMatrix mixer,
-	       unsigned int numActuators);
+    WrenchMixer(MixMatrix mixer,
+		unsigned int numActuators);
 
-    ~BasicMixer();
+    ~WrenchMixer();
 
   // ----------------------------------------------------------------------
   // Parameter, model, and gain setters
@@ -65,8 +65,8 @@ class BasicMixer {
   // Torque/moment setter
   // ----------------------------------------------------------------------
 
-    int SetTorqueThrustDes(const Vector3& moment_b__des,
-                           const Vector3& thrust_b__des);
+    int SetWrenchDes(const Vector3& thrust_b__des,
+		     const Vector3& moment_b__des);
 
  private:
     // Parameters
@@ -80,9 +80,9 @@ class BasicMixer {
     Vector3 thrust_b__des;
 
     // parameters object - warning tolerances, physical parameters
-}; // class BasicMixer NOLINT()
+}; // class WrenchMixer NOLINT()
 
 } // namespace multirotor NOLINT()
 } // namespace quest_gnc NOLINT()
 
-#endif  // QUEST_GNC_INCLUDE_QUEST_GNC_MIXER_BASIC_MIXER_H_
+#endif  // QUEST_GNC_INCLUDE_QUEST_GNC_MIXER_WRENCH_MIXER_H_
