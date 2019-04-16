@@ -67,25 +67,25 @@ int LeeControl::
 int LeeControl::
   SetModel(MultirotorModel mrModel) {
     // TODO(mereweth) - store smallnum as parameter
-    if (mrModel.mass < 1e-6) {
+    if (mrModel.rigidBody.mass < 1e-6) {
         return -1;
     }
     this->mrModel = mrModel;
 
-    this->invMass = static_cast<FloatingPoint>(1.0f) / this->mrModel.mass;
+    this->invMass = static_cast<FloatingPoint>(1.0f) / this->mrModel.rigidBody.mass;
 
     // TODO(mereweth) - check all positive
     
-    this->inertia(0, 0) = this->mrModel.Ixx;
-    this->inertia(1, 1) = this->mrModel.Iyy;
-    this->inertia(2, 2) = this->mrModel.Izz;
+    this->inertia(0, 0) = this->mrModel.rigidBody.Ixx;
+    this->inertia(1, 1) = this->mrModel.rigidBody.Iyy;
+    this->inertia(2, 2) = this->mrModel.rigidBody.Izz;
 
-    this->inertia(0, 1) = this->mrModel.Ixy;
-    this->inertia(1, 0) = this->mrModel.Ixy;
-    this->inertia(0, 2) = this->mrModel.Ixz;
-    this->inertia(2, 0) = this->mrModel.Ixz;
-    this->inertia(1, 2) = this->mrModel.Iyz;
-    this->inertia(2, 1) = this->mrModel.Iyz;
+    this->inertia(0, 1) = this->mrModel.rigidBody.Ixy;
+    this->inertia(1, 0) = this->mrModel.rigidBody.Ixy;
+    this->inertia(0, 2) = this->mrModel.rigidBody.Ixz;
+    this->inertia(2, 0) = this->mrModel.rigidBody.Ixz;
+    this->inertia(1, 2) = this->mrModel.rigidBody.Iyz;
+    this->inertia(2, 1) = this->mrModel.rigidBody.Iyz;
 
     return 0;
 }
@@ -155,13 +155,12 @@ int LeeControl::
     // NOTE(mereweth) - sensitive to orientation estimate and map alignment
     const Vector3 v_w__err = this->v_w__des - this->w_R_b * this->v_b;
 
-    // TODO(mereweth) remove invMass here and make gains account for mass?
     if (velOnly) {
-        *a_w__comm = v_w__err.cwiseProduct(this->k_v) * invMass;
+        *a_w__comm = v_w__err.cwiseProduct(this->k_v) * this->invMass;
     }
     else {
         *a_w__comm = (x_w__err.cwiseProduct(this->k_x)
-                      + v_w__err.cwiseProduct(this->k_v)) * invMass;
+                      + v_w__err.cwiseProduct(this->k_v)) * this->invMass;
     }
     *a_w__comm += wParams.gravityMag * Vector3::UnitZ() + this->a_w__des;
 

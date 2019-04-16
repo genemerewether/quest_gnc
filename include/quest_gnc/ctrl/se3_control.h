@@ -20,15 +20,12 @@
 
 #include <Eigen/Eigen>
 
-#include "quest_gnc/diffeo/rates.h"
-#include "quest_gnc/diffeo/body_frame.h"
-#include "quest_gnc/utils/multirotor_model.h"
+#include "quest_gnc/utils/se3_model.h"
 #include "quest_gnc/utils/world_params.h"
 
 #include "quest_gnc/utils/common.h"
 
 namespace quest_gnc {
-namespace multirotor {
 
 class Se3Control {
  public:
@@ -40,7 +37,7 @@ class Se3Control {
                const Vector3& k_v,
                const Vector3& k_R,
                const Vector3& k_omega,
-               MultirotorModel mrModel,
+               Se3Model se3Model,
                WorldParams wParams);
 
     ~Se3Control();
@@ -51,7 +48,7 @@ class Se3Control {
 
     int SetWorldParams(WorldParams wParams);
 
-    int SetModel(MultirotorModel mrModel);
+    int SetModel(Se3Model se3Model);
 
     int SetGains(const Vector3& k_x,
                  const Vector3& k_v,
@@ -139,7 +136,7 @@ class Se3Control {
     Vector3 sat_R;
     Vector3 sat_omega;
 
-    MultirotorModel mrModel;
+    Se3Model se3Model;
 
     FloatingPoint invMass;
     Matrix3 inertia;
@@ -175,7 +172,6 @@ class Se3Control {
     // parameters object - warning tolerances, physical parameters
 }; // class Se3Control NOLINT()
 
-} // namespace multirotor NOLINT()
 } // namespace quest_gnc NOLINT()
 
 #endif  // QUEST_GNC_INCLUDE_QUEST_GNC_CTRL_SE3_CONTROL_H_

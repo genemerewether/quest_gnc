@@ -15,23 +15,27 @@
 // countries or providing access to foreign persons.
 // ======================================================================
 
-#ifndef QUEST_GNC_INCLUDE_QUEST_GNC_UTILS_MULTIROTOR_MODEL_H_
-#define QUEST_GNC_INCLUDE_QUEST_GNC_UTILS_MULTIROTOR_MODEL_H_
+#ifndef QUEST_GNC_INCLUDE_QUEST_GNC_UTILS_RIGIDBODY_MODEL_H_
+#define QUEST_GNC_INCLUDE_QUEST_GNC_UTILS_RIGIDBODY_MODEL_H_
 
 #include <Eigen/Eigen>
-
-#include "quest_gnc/utils/rigidbody_model.h"
 
 #include "quest_gnc/utils/common.h"
 
 namespace quest_gnc {
-namespace multirotor {
 
-struct MultirotorModel {
-    RigidBodyModel rigidBody;
-}; // struct MultirotorModel NOLINT()
+struct RigidBodyModel {
+    FloatingPoint mass;
 
-} // namespace multirotor NOLINT()
+    FloatingPoint Ixx;
+    FloatingPoint Iyy;
+    FloatingPoint Izz;
+
+    FloatingPoint Ixy;
+    FloatingPoint Ixz;
+    FloatingPoint Iyz;
+}; // struct RigidBodyModel NOLINT()
+
 } // namespace quest_gnc NOLINT()
 
-#endif  // QUEST_GNC_INCLUDE_QUEST_GNC_UTILS_MULTIROTOR_MODEL_H_
+#endif  // QUEST_GNC_INCLUDE_QUEST_GNC_UTILS_RIGIDBODY_MODEL_H_
