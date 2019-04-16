@@ -87,9 +87,9 @@ int WrenchMixer::
 		this->moment_b__des(2);
 
     *rotVel__comm = this->mixerPinv * controls;
-    *rotVel__comm = rotVel__comm->cwiseMax(
-                      MixOutput::Zero(rotVel__comm->rows()));
-    *rotVel__comm = rotVel__comm->cwiseSqrt();
+
+    const MixOutput signOfCmd = rotVel__comm->cwiseSign();
+    *rotVel__comm = signOfCmd.cwiseProduct(rotVel__comm->cwiseAbs().cwiseSqrt());
 
     return 0;
 }
