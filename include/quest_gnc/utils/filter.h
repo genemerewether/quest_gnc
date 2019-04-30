@@ -43,6 +43,8 @@ class filter {
     inline int updateSingleNumCoeff(int n, FloatingPoint val);
     
     inline int updateSingleDenCoeff(int n, FloatingPoint val);
+
+    int setPassthrough();
     
  private:
     int aSize_;
@@ -125,7 +127,7 @@ FloatingPoint filter<MAX_FILT_SIZE>::execute(FloatingPoint x) {
      */
     const int histIdxTopHalf = histIdx_ + MAX_FILT_SIZE - 1;
 
-    u_[histIdx_] = x_[histIdxTopHalf] = x;
+    x_[histIdx_] = x_[histIdxTopHalf] = x;
     y_[histIdx_] = y_[histIdxTopHalf] = y;
 
     return y;
@@ -191,7 +193,7 @@ int filter<MAX_FILT_SIZE>::setDenominator(int size,
 }
 
 template <int MAX_FILT_SIZE>
-int Filter<MAX_FILT_SIZE>::updateSingleNumCoeff(int n, FloatingPoint val) {
+int filter<MAX_FILT_SIZE>::updateSingleNumCoeff(int n, FloatingPoint val) {
     if (n >= bSize_) {
         return 1;
     }
@@ -202,7 +204,7 @@ int Filter<MAX_FILT_SIZE>::updateSingleNumCoeff(int n, FloatingPoint val) {
 }
 
 template <int MAX_FILT_SIZE>
-int Filter<MAX_FILT_SIZE>::updateSingleDenCoeff(int n, FloatingPoint val) {
+int filter<MAX_FILT_SIZE>::updateSingleDenCoeff(int n, FloatingPoint val) {
     if (n >= aSize_) {
         return 1;
     }
@@ -214,6 +216,14 @@ int Filter<MAX_FILT_SIZE>::updateSingleDenCoeff(int n, FloatingPoint val) {
     a_[n] = val;
 
     return 0;
+}
+
+template <int MAX_FILT_SIZE>
+int filter<MAX_FILT_SIZE>::setPassthrough() {
+  const F64 b[1] = {1.0};
+  const F64 a[1] = {1.0};
+
+  return setNumerator(1, b) + setDenominator(1, a);
 }
  
 template <int MAX_FILT_SIZE>
