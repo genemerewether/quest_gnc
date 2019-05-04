@@ -84,13 +84,13 @@ inline int expMap3(const Vector3& v, Matrix3* m) {
 }
 
 inline int wrapAngle(FloatingPoint *angle) {
-    if (angle < -M_PI) {
-        unsigned int num2pi = 1u + (unsigned int) fabs(angle / (2 * M_PI));
-        angle += num2pi * 2 * M_PI;
+    if (*angle < -M_PI) {
+        unsigned int num2pi = 1u + (unsigned int) fabs(*angle / (2 * M_PI));
+        *angle += num2pi * 2 * M_PI;
     }
-    else if (angle > M_PI) {
-        unsigned int num2pi = 1u + (unsigned int) fabs(angle / (2 * M_PI));
-        angle -= num2pi * 2 * M_PI;
+    else if (*angle > M_PI) {
+        unsigned int num2pi = 1u + (unsigned int) fabs(*angle / (2 * M_PI));
+        *angle -= num2pi * 2 * M_PI;
     }
 }
 
