@@ -197,13 +197,17 @@ int Se3Control::
   GetAngAxisAlignedCommand(Vector3* alpha_b__comm,
 			   unsigned char mask) {
     Vector3 e_omega = this->omega_b__des - this->omega_b;
-    const Matrix3 w_R_b__err = this->w_R_b.transpose() * this->w_R_b__des;
     for (unsigned int i = 0; i < 3; i++) {
         (*alpha_b__comm)(i) = 0.0;
         if (mask & (1 << i)) {
   	    FloatingPoint angle = 0.0;
-	    getUnitAngle(&angle, w_R_b__err, i);
-	    (*alpha_b__comm)(i) += angle * this->k_R(i);
+	    getUnitAngle(&angle, this->w_R_b, i);
+  	    FloatingPoint angle_des = 0.0;
+	    getUnitAngle(&angle_des, this->w_R_b__des, i);
+
+	    FloatingPoint angleDiff = angle_des - angle;
+	    wrapAngle(&angleDiff);
+	    (*alpha_b__comm)(i) += angleDiff * this->k_R(i);
 	    (*alpha_b__comm)(i) += e_omega(i) * this->k_omega(i);
 	}
     }

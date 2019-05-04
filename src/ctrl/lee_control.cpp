@@ -206,13 +206,17 @@ int LeeControl::
   GetAngAxisAlignedCommand(Vector3* alpha_b__comm,
 			   unsigned char mask) {
     Vector3 e_omega = this->omega_b__des - this->omega_b;
-    const Matrix3 w_R_b__err = this->w_R_b.transpose() * this->w_R_b__des;
     for (unsigned int i = 0; i < 3; i++) {
         (*alpha_b__comm)(i) = 0.0;
         if (mask & (1 << i)) {
   	    FloatingPoint angle = 0.0;
-	    getUnitAngle(&angle, w_R_b__err, i);
-	    (*alpha_b__comm)(i) += angle * this->k_R(i);
+	    getUnitAngle(&angle, this->w_R_b, i);
+  	    FloatingPoint angle_des = 0.0;
+	    getUnitAngle(&angle_des, this->w_R_b__des, i);
+
+	    FloatingPoint angleDiff = angle_des - angle;
+	    wrapAngle(&angleDiff);
+	    (*alpha_b__comm)(i) += angleDiff * this->k_R(i);
 	    (*alpha_b__comm)(i) += e_omega(i) * this->k_omega(i);
 	}
     }
@@ -281,23 +285,9 @@ int LeeControl::
 
 int LeeControl::
   SetYawDes(FloatingPoint yaw_des) {
-
-    if (yaw_des > M_PI) {
-        yaw_des -= 2*M_PI;
-    }
-    else if (yaw_des < -M_PI) {
-        yaw_des += 2*M_PI;
-    }
-  
+    wrapAngle(&yaw_des);  
     FloatingPoint yawDiff = yaw_des - this->yaw;
-    if (yawDiff < -M_PI) {
-        unsigned int num2pi = 1u + (unsigned int) fabs(yawDiff / (2 * M_PI));
-        yawDiff += num2pi * 2 * M_PI;
-    }
-    else if (yawDiff > M_PI) {
-        unsigned int num2pi = 1u + (unsigned int) fabs(yawDiff / (2 * M_PI));
-        yawDiff -= num2pi * 2 * M_PI;
-    }
+    wrapAngle(&yawDiff);
 
     if (fabs(yawDiff) > this->sat_yaw) {
         DEBUG_PRINT("yawDiff %f, yaw_des %f, this->yaw %f\n",
