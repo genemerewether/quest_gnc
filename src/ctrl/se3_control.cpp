@@ -15,7 +15,7 @@
 // countries or providing access to foreign persons.
 // ======================================================================
 
-#include "quest_gnc/ctrl/lee_control.h"
+#include "quest_gnc/ctrl/se3_control.h"
 
 #include "quest_gnc/utils/so3.h"
 
@@ -28,15 +28,13 @@
 //#define DEBUG_PRINT(x,...) printf(x,##__VA_ARGS__)
 
 namespace quest_gnc {
-namespace multirotor {
 
-LeeControl::LeeControl() :
+Se3Control::Se3Control() :
     k_x(0, 0, 0), k_v(0, 0, 0),
     k_R(0, 0, 0), k_omega(0, 0, 0),
     sat_x(0, 0, 0), sat_v(0, 0, 0),
     sat_R(0, 0, 0), sat_omega(0, 0, 0),
-    sat_yaw(0.0),
-    mrModel(),
+    se3Model(),
     invMass(1.0f),
     inertia(Matrix3::Identity()),
     wParams(),
@@ -44,12 +42,10 @@ LeeControl::LeeControl() :
     v_b(0, 0, 0), omega_b(0, 0, 0),
     x_w__des(0, 0, 0), v_w__des(0, 0, 0), a_w__des(0, 0, 0),
     w_R_b__des(Matrix3::Identity()),
-    omega_b__des(0, 0, 0), alpha_b__des(0, 0, 0),
-    bodyFrame(),
-    rates() {
+    omega_b__des(0, 0, 0), alpha_b__des(0, 0, 0) {
 }
 
-LeeControl::~LeeControl() {
+Se3Control::~Se3Control() {
     // TODO(mereweth)
 }
 
@@ -57,40 +53,40 @@ LeeControl::~LeeControl() {
 // Parameter, model, and gain setters
 // ----------------------------------------------------------------------
 
-int LeeControl::
+int Se3Control::
   SetWorldParams(WorldParams wParams) {
     this->wParams = wParams;
 
     return 0;
 }
 
-int LeeControl::
-  SetModel(MultirotorModel mrModel) {
+int Se3Control::
+  SetModel(Se3Model se3Model) {
     // TODO(mereweth) - store smallnum as parameter
-    if (mrModel.rigidBody.mass < 1e-6) {
+    if (se3Model.rigidBody.mass < 1e-6) {
         return -1;
     }
-    this->mrModel = mrModel;
+    this->se3Model = se3Model;
 
-    this->invMass = static_cast<FloatingPoint>(1.0f) / this->mrModel.rigidBody.mass;
+    this->invMass = static_cast<FloatingPoint>(1.0f) / this->se3Model.rigidBody.mass;
 
     // TODO(mereweth) - check all positive
     
-    this->inertia(0, 0) = this->mrModel.rigidBody.Ixx;
-    this->inertia(1, 1) = this->mrModel.rigidBody.Iyy;
-    this->inertia(2, 2) = this->mrModel.rigidBody.Izz;
+    this->inertia(0, 0) = this->se3Model.rigidBody.Ixx;
+    this->inertia(1, 1) = this->se3Model.rigidBody.Iyy;
+    this->inertia(2, 2) = this->se3Model.rigidBody.Izz;
 
-    this->inertia(0, 1) = this->mrModel.rigidBody.Ixy;
-    this->inertia(1, 0) = this->mrModel.rigidBody.Ixy;
-    this->inertia(0, 2) = this->mrModel.rigidBody.Ixz;
-    this->inertia(2, 0) = this->mrModel.rigidBody.Ixz;
-    this->inertia(1, 2) = this->mrModel.rigidBody.Iyz;
-    this->inertia(2, 1) = this->mrModel.rigidBody.Iyz;
+    this->inertia(0, 1) = this->se3Model.rigidBody.Ixy;
+    this->inertia(1, 0) = this->se3Model.rigidBody.Ixy;
+    this->inertia(0, 2) = this->se3Model.rigidBody.Ixz;
+    this->inertia(2, 0) = this->se3Model.rigidBody.Ixz;
+    this->inertia(1, 2) = this->se3Model.rigidBody.Iyz;
+    this->inertia(2, 1) = this->se3Model.rigidBody.Iyz;
 
     return 0;
 }
 
-int LeeControl::
+int Se3Control::
   SetGains(const Vector3& k_x,
            const Vector3& k_v,
            const Vector3& k_R,
@@ -103,18 +99,15 @@ int LeeControl::
     return 0;
 }
 
-int LeeControl::
+int Se3Control::
   SetSaturation(const Vector3& sat_x,
                 const Vector3& sat_v,
                 const Vector3& sat_R,
-                const Vector3& sat_omega,
-                FloatingPoint sat_yaw) {
+                const Vector3& sat_omega) {
     this->sat_x = sat_x.cwiseAbs();
     this->sat_v = sat_v.cwiseAbs();
     this->sat_R = sat_R.cwiseAbs();
     this->sat_omega = sat_omega.cwiseAbs();
-    this->sat_yaw = fabs(sat_yaw);
-
     
     DEBUG_PRINT("sat_x [%f, %f, %f]\n",
                 this->sat_x(0), this->sat_x(1), this->sat_x(2));
@@ -131,7 +124,7 @@ int LeeControl::
 // Thrust and moment getters
 // ----------------------------------------------------------------------
 
-int LeeControl::
+int Se3Control::
   GetAccelAngAccelCommand(Vector3* a_w__comm,
                           Vector3* alpha_b__comm) {
     FW_ASSERT(a_w__comm);
@@ -144,7 +137,7 @@ int LeeControl::
     return stat;
 }
 
-int LeeControl::
+int Se3Control::
   GetAccelCommand(Vector3* a_w__comm, bool velOnly) {
     FW_ASSERT(a_w__comm);
 
@@ -163,15 +156,13 @@ int LeeControl::
                       + v_w__err.cwiseProduct(this->k_v)) * this->invMass;
     }
     *a_w__comm += wParams.gravityMag * Vector3::UnitZ() + this->a_w__des;
-
-    // TODO(mereweth) - check return value
-    (void) this->bodyFrame.FromYawAccel(yaw_des, *a_w__comm, &this->w_R_b__des);
+    *a_w__comm -= this->se3Model.force_z * this->invMass * Vector3::UnitZ();
 
     // NOTE(mereweth) - commanded attitude is set above, so give error code if saturated
     return this->saturateAngular();
 }
 
-int LeeControl::
+int Se3Control::
   GetAngAccelCommand(Vector3* alpha_b__comm,
                      bool rpVelOnly,
                      bool yawVelOnly) {
@@ -202,7 +193,7 @@ int LeeControl::
     // TODO(mereweth) - sanitize inputs; return code
 }
 
-int LeeControl::
+int Se3Control::
   GetAngAxisAlignedCommand(Vector3* alpha_b__comm,
 			   unsigned char mask) {
     Vector3 e_omega = this->omega_b__des - this->omega_b;
@@ -228,7 +219,7 @@ int LeeControl::
 // Feedback setters
 // ----------------------------------------------------------------------
 
-int LeeControl::
+int Se3Control::
   SetOdometry(const Vector3& x_w,
               const Quaternion& w_q_b,
               const Vector3& v_b,
@@ -237,26 +228,24 @@ int LeeControl::
     this->w_R_b = w_q_b.toRotationMatrix();
     this->v_b = v_b;
     this->omega_b = omega_b;
-
-    getUnitAngle(&this->yaw, this->w_R_b, 2);
+    
     return 0;
 
     // TODO(mereweth) - sanitize inputs; return code
 }
 
-int LeeControl::
+int Se3Control::
   SetAttitudeAngVel(const Quaternion& w_q_b,
                     const Vector3& omega_b) {
     this->w_R_b = w_q_b.toRotationMatrix();    
     this->omega_b = omega_b;
 
-    getUnitAngle(&this->yaw, this->w_R_b, 2);
     return 0;
 
     // TODO(mereweth) - sanitize inputs; return code
 }
 
-int LeeControl::
+int Se3Control::
   SetPositionLinVel(const Vector3& x_w,
                     const Vector3& v_b) {
     this->x_w = x_w;
@@ -270,7 +259,7 @@ int LeeControl::
 // Command setters
 // ----------------------------------------------------------------------
 
-int LeeControl::
+int Se3Control::
   SetPositionDes(const Vector3& x_w__des,
                  const Vector3& v_w__des,
                  const Vector3& a_w__des) {
@@ -283,27 +272,7 @@ int LeeControl::
     // TODO(mereweth) - sanitize inputs; return code
 }
 
-int LeeControl::
-  SetYawDes(FloatingPoint yaw_des) {
-    wrapAngle(&yaw_des);  
-    FloatingPoint yawDiff = yaw_des - this->yaw;
-    wrapAngle(&yawDiff);
-
-    if (fabs(yawDiff) > this->sat_yaw) {
-        DEBUG_PRINT("yawDiff %f, yaw_des %f, this->yaw %f\n",
-                    yawDiff, yaw_des, this->yaw);
-        this->yaw_des = this->yaw + ((yawDiff > 0.0) ? this->sat_yaw : -this->sat_yaw);
-        return -1;
-    }
-    else {
-        this->yaw_des = yaw_des;
-        return 0;
-    }
-
-    // TODO(mereweth) - sanitize inputs; return code
-}
-
-int LeeControl::
+int Se3Control::
   SetVelocityDes(const Vector3& v_w__des,
                  const Vector3& a_w__des) {
     this->v_w__des = v_w__des;
@@ -314,14 +283,16 @@ int LeeControl::
     // TODO(mereweth) - sanitize inputs; return code
 }
 
-int LeeControl::
+int Se3Control::
   SetAttitudeDes(const Quaternion& w_q_b__des,
                  const Vector3& omega_b__des,
+                 const Vector3& alpha_b__des,
                  bool rpVelOnly,
                  bool yawVelOnly,
 		 bool doSaturation) {  
     this->w_R_b__des = w_q_b__des.toRotationMatrix();
     this->omega_b__des = omega_b__des;
+    this->alpha_b__des = alpha_b__des;
 
     if (doSaturation) {
         return this->saturateAngular(rpVelOnly, yawVelOnly);
@@ -333,28 +304,19 @@ int LeeControl::
     // TODO(mereweth) - sanitize inputs; return code
 }
 
-int LeeControl::
-  SetAttitudeAngAccelDes(const Quaternion& w_q_b__des,
-                         const Vector3& omega_b__des,
-                         const Vector3& alpha_b__des) {  
-    this->w_R_b__des = w_q_b__des.toRotationMatrix();
+int Se3Control::
+  SetAngVelDes(const Vector3& omega_b__des,
+	       const Vector3& alpha_b__des,
+	       bool doSaturation) {
     this->omega_b__des = omega_b__des;
     this->alpha_b__des = alpha_b__des;
-    
-    return this->saturateAngular();
 
-    // TODO(mereweth) - sanitize inputs; return code
-}
-
-int LeeControl::
-  SetPositionAngAccelDes(const Vector3& x_w__des,
-                         const Vector3& v_w__des,
-                         const Vector3& alpha_b__des) {
-    this->x_w__des = x_w__des;
-    this->v_w__des = v_w__des;
-    this->alpha_b__des = alpha_b__des;
-    
-    return this->saturateLinear();
+    if (doSaturation) {
+        return this->saturateAngular(true, true);
+    }
+    else {
+        return 0;
+    }
 
     // TODO(mereweth) - sanitize inputs; return code
 }
@@ -363,7 +325,7 @@ int LeeControl::
 // Private helper functions
 // ----------------------------------------------------------------------
   
-void LeeControl::
+void Se3Control::
   so3Error(Vector3* e_R, Vector3* e_omega,
            bool rpVelOnly,
            bool yawVelOnly) {
@@ -394,7 +356,7 @@ void LeeControl::
     }
 }
 
-int LeeControl::
+int Se3Control::
   saturateAngular(bool rpVelOnly,
                   bool yawVelOnly) {
     Vector3 e_R;
@@ -433,7 +395,7 @@ int LeeControl::
     return 0;
 }
     
-int LeeControl::
+int Se3Control::
   saturateLinear() {
     Vector3 e_x = this->x_w__des - this->x_w;
     
@@ -471,6 +433,5 @@ int LeeControl::
     }
     return 0;
 }
-  
-} // namespace multirotor NOLINT()
+
 } // namespace quest_gnc NOLINT()

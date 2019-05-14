@@ -15,23 +15,15 @@
 // countries or providing access to foreign persons.
 // ======================================================================
 
-#ifndef QUEST_GNC_INCLUDE_QUEST_GNC_UTILS_MULTIROTOR_MODEL_H_
-#define QUEST_GNC_INCLUDE_QUEST_GNC_UTILS_MULTIROTOR_MODEL_H_
-
-#include <Eigen/Eigen>
-
-#include "quest_gnc/utils/rigidbody_model.h"
-
-#include "quest_gnc/utils/common.h"
+#ifndef QUEST_GNC_INCLUDE_QUEST_GNC_MIXER_WRENCH_MIXER_CFG_H_
+#define QUEST_GNC_INCLUDE_QUEST_GNC_MIXER_WRENCH_MIXER_CFG_H_
 
 namespace quest_gnc {
 namespace multirotor {
 
-struct MultirotorModel {
-    RigidBodyModel rigidBody;
-}; // struct MultirotorModel NOLINT()
+  static const unsigned int kWrenchMixerMaxActuators = 8;
 
 } // namespace multirotor NOLINT()
 } // namespace quest_gnc NOLINT()
 
-#endif  // QUEST_GNC_INCLUDE_QUEST_GNC_UTILS_MULTIROTOR_MODEL_H_
+#endif  // QUEST_GNC_INCLUDE_QUEST_GNC_MIXER_WRENCH_MIXER_CFG_H_

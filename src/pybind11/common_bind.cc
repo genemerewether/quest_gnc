@@ -15,23 +15,20 @@
 // countries or providing access to foreign persons.
 // ======================================================================
 
-#ifndef QUEST_GNC_INCLUDE_QUEST_GNC_UTILS_MULTIROTOR_MODEL_H_
-#define QUEST_GNC_INCLUDE_QUEST_GNC_UTILS_MULTIROTOR_MODEL_H_
-
-#include <Eigen/Eigen>
-
-#include "quest_gnc/utils/rigidbody_model.h"
-
 #include "quest_gnc/utils/common.h"
 
-namespace quest_gnc {
-namespace multirotor {
+#include <pybind11/eigen.h>
+#include <pybind11/pybind11.h>
+namespace py = pybind11;
 
-struct MultirotorModel {
-    RigidBodyModel rigidBody;
-}; // struct MultirotorModel NOLINT()
+using namespace quest_gnc;
+using namespace pybind11::literals; // NOLINT()
 
-} // namespace multirotor NOLINT()
-} // namespace quest_gnc NOLINT()
+void common_bind(py::module &m) { // NOLINT()
+  py::class_<ImuSample>(m, "ImuSample")
+      .def(py::init<>())
 
-#endif  // QUEST_GNC_INCLUDE_QUEST_GNC_UTILS_MULTIROTOR_MODEL_H_
+      .def_readwrite("t", &ImuSample::t)
+      .def_readwrite("omega_b", &ImuSample::omega_b)
+      .def_readwrite("a_b", &ImuSample::a_b);
+}

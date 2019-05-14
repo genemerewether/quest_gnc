@@ -15,7 +15,7 @@
 // countries or providing access to foreign persons.
 // ======================================================================
 
-#include "quest_gnc/mixer/basic_mixer.h"
+#include "quest_gnc/mixer/wrench_mixer.h"
 #include "quest_gnc/utils/common.h"
 
 #include "Eigen/Geometry"
@@ -37,30 +37,30 @@
 namespace quest_gnc {
 namespace multirotor {
 
-BasicMixer::BasicMixer() :
+WrenchMixer::WrenchMixer() :
     mixerPinv(),
     moment_b__des(0,0,0), thrust_b__des(0,0,0) {
 }
 
-BasicMixer::~BasicMixer() {
+WrenchMixer::~WrenchMixer() {
 }
 
 // ----------------------------------------------------------------------
 // Parameter, model, and gain setters
 // ----------------------------------------------------------------------
 
-int BasicMixer::
+int WrenchMixer::
   SetMixer(MixMatrix mixer,
   	   unsigned int numActuators) {
 
     // TODO(mgardine) - use return code here if matrix inversion fails?
 
-    if (numActuators > kBasicMixerMaxActuators) {
+    if (numActuators > kWrenchMixerMaxActuators) {
         return -1;
     }
     
-    if (numActuators < kBasicMixerMaxActuators) {
-        mixer.rightCols(kBasicMixerMaxActuators - numActuators).setZero();
+    if (numActuators < kWrenchMixerMaxActuators) {
+        mixer.rightCols(kWrenchMixerMaxActuators - numActuators).setZero();
     }
     
     this->mixerPinv =
@@ -74,19 +74,22 @@ int BasicMixer::
 // Thrust and moment getters
 // ----------------------------------------------------------------------
 
-int BasicMixer::
+int WrenchMixer::
   GetRotorVelCommand(MixOutput* rotVel__comm) {
     FW_ASSERT(rotVel__comm);
 
-    const Vector4 controls(this->moment_b__des(0),
-			   this->moment_b__des(1),
-			   this->moment_b__des(2),
-			   this->thrust_b__des(2));
+    Vector6 controls;
+    controls << this->thrust_b__des(0),
+                this->thrust_b__des(1),
+		this->thrust_b__des(2),
+		this->moment_b__des(0),
+		this->moment_b__des(1),
+		this->moment_b__des(2);
 
     *rotVel__comm = this->mixerPinv * controls;
-    *rotVel__comm = rotVel__comm->cwiseMax(
-                      MixOutput::Zero(rotVel__comm->rows()));
-    *rotVel__comm = rotVel__comm->cwiseSqrt();
+
+    const MixOutput signOfCmd = rotVel__comm->cwiseSign();
+    *rotVel__comm = signOfCmd.cwiseProduct(rotVel__comm->cwiseAbs().cwiseSqrt());
 
     return 0;
 }
@@ -95,9 +98,9 @@ int BasicMixer::
 // Command setters
 // ----------------------------------------------------------------------
 
-int BasicMixer::
-  SetTorqueThrustDes(const Vector3& moment_b__des,
-                     const Vector3& thrust_b__des) {
+int WrenchMixer::
+  SetWrenchDes(const Vector3& thrust_b__des,
+	       const Vector3& moment_b__des) {
     this->moment_b__des = moment_b__des;
     this->thrust_b__des = thrust_b__des;
     return 0;

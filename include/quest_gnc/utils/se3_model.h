@@ -15,8 +15,8 @@
 // countries or providing access to foreign persons.
 // ======================================================================
 
-#ifndef QUEST_GNC_INCLUDE_QUEST_GNC_UTILS_MULTIROTOR_MODEL_H_
-#define QUEST_GNC_INCLUDE_QUEST_GNC_UTILS_MULTIROTOR_MODEL_H_
+#ifndef QUEST_GNC_INCLUDE_QUEST_GNC_UTILS_SE3_MODEL_H_
+#define QUEST_GNC_INCLUDE_QUEST_GNC_UTILS_SE3_MODEL_H_
 
 #include <Eigen/Eigen>
 
@@ -25,13 +25,13 @@
 #include "quest_gnc/utils/common.h"
 
 namespace quest_gnc {
-namespace multirotor {
 
-struct MultirotorModel {
+struct Se3Model {
     RigidBodyModel rigidBody;
-}; // struct MultirotorModel NOLINT()
+    // static force in world z from e.g. buoyancy (+) / tether (-)
+    FloatingPoint force_z;
+}; // struct Se3Model NOLINT()
 
-} // namespace multirotor NOLINT()
 } // namespace quest_gnc NOLINT()
 
-#endif  // QUEST_GNC_INCLUDE_QUEST_GNC_UTILS_MULTIROTOR_MODEL_H_
+#endif  // QUEST_GNC_INCLUDE_QUEST_GNC_UTILS_SE3_MODEL_H_

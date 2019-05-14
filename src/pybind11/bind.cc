@@ -22,12 +22,16 @@ void rates_bind(py::module &);
 void body_frame_bind(py::module &);
 void lee_control_bind(py::module &);
 void imu_integ_bind(py::module &);
+void att_filter_bind(py::module &);
 void signal_gen_bind(py::module &);
+void common_bind(py::module &);
 
 PYBIND11_MODULE(quest_gncpy, m) {
   rates_bind(m);
   body_frame_bind(m);
   lee_control_bind(m);
   imu_integ_bind(m);
+  att_filter_bind(m);
   signal_gen_bind(m);
+  common_bind(m);
 }

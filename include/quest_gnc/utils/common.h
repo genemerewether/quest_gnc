@@ -49,6 +49,8 @@ typedef QUEST_GNC_FLOAT_TYPE FloatingPoint;
 #endif
 
 typedef Eigen::Matrix<FloatingPoint, 3, 1> Vector3;
+typedef Eigen::Matrix<FloatingPoint, 4, 1> Vector4;
+typedef Eigen::Matrix<FloatingPoint, 6, 1> Vector6;
 typedef Eigen::Matrix<FloatingPoint, 3, 3> Matrix3;
 typedef Eigen::Matrix<FloatingPoint, 4, 4> Matrix4;
 typedef Eigen::Quaternion<FloatingPoint> Quaternion;
