@@ -152,17 +152,20 @@ int AttFilter::
   GetState(Vector3* x_w,
            Quaternion* w_q_b,
            Vector3* v_b,
-           Vector3* omega_b) {
+           Vector3* omega_b,
+           Vector3* a_b) {
     FW_ASSERT(x_w);
     FW_ASSERT(w_q_b);
     FW_ASSERT(v_b);
     FW_ASSERT(omega_b);
+    FW_ASSERT(a_b);
 
     *x_w = this->x_w;
     this->b_q_w.normalize();
     *w_q_b = this->b_q_w.conjugate();
     *v_b = this->v_b;
     *omega_b = this->omega_b;
+    *a_b = this->a_b;
     
     //DEBUG_PRINT("GetState att_filter\n");
 
@@ -357,8 +360,8 @@ int AttFilter::
         this->omega_b__prev = imu->omega_b;
 
         const Vector3 omega_b__unbias = imu->omega_b - this->wBias;
-	// store unbiased angular velocity for odometry
-	this->omega_b = omega_b__unbias;
+        // store unbiased angular velocity for odometry
+        this->omega_b = omega_b__unbias;
         Quaternion omega_b__pureQuat;
         omega_b__pureQuat.w() = 0.0;
         omega_b__pureQuat.x() = omega_b__unbias(0);
@@ -433,10 +436,11 @@ int AttFilter::
 
         // -------------------------- Position kinematics --------------------------
 
-        const Vector3 a_b__temp = imu->a_b - this->aBias - this->b_q_w
-                                  * Vector3(0, 0, this->wParams.gravityMag);
+        // store unbiased linear acceleration for odometry
+        this->a_b = imu->a_b - this->aBias - this->b_q_w
+                    * Vector3(0, 0, this->wParams.gravityMag);
 
-        this->v_b += a_b__temp * this->dt;
+        this->v_b += this->a_b * this->dt;
         this->x_w += this->b_q_w.conjugate() * this->v_b * this->dt;
 
         // NOTE(mereweth) - store final result of attitude filter step after position kinematics

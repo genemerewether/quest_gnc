@@ -41,7 +41,7 @@ LeeControl::LeeControl() :
     inertia(Matrix3::Identity()),
     wParams(),
     x_w(0, 0, 0), w_R_b(Matrix3::Identity()),
-    v_b(0, 0, 0), omega_b(0, 0, 0),
+    v_b(0, 0, 0), a_b(0, 0, 0), omega_b(0, 0, 0),
     x_w__des(0, 0, 0), v_w__des(0, 0, 0), a_w__des(0, 0, 0),
     w_R_b__des(Matrix3::Identity()),
     omega_b__des(0, 0, 0), alpha_b__des(0, 0, 0),
@@ -167,6 +167,27 @@ int LeeControl::
     // TODO(mereweth) - check return value
     (void) this->bodyFrame.FromYawAccel(yaw_des, *a_w__comm, &this->w_R_b__des);
 
+    // NOTE(mereweth) - set angular velocity desired based on position error dynamics
+    // NOTE(mereweth) - sensitive to orientation estimate and map alignment
+    // TODO(mereweth) - test in simple sim with gaussian noise - is this term worth including?
+    const Vector3 a_w__err(0, 0, 0);// = this->a_w__des - this->w_R_b * this->a_b;
+    Vector3 a_w__comm_dot;
+    if (velOnly) {
+        a_w__comm_dot = a_w__err.cwiseProduct(this->k_v) * this->invMass;
+    }
+    else {
+        a_w__comm_dot = (v_w__err.cwiseProduct(this->k_x)
+                         + a_w__err.cwiseProduct(this->k_v)) * this->invMass;
+    }
+    // TODO(mereweth) - test in simple sim with tracking error - is feedforward appropriate?
+    //a_w__comm_dot += this->j_w__des;
+    // -y_body dot prod z_body_dot
+    this->omega_b__des(0) = -this->w_R_b__des.col(1).dot(a_w__comm_dot) / a_w__comm->norm();
+    // x_body dot prod z_body_dot
+    this->omega_b__des(1) = this->w_R_b__des.col(0).dot(a_w__comm_dot) / a_w__comm->norm();
+    // TODO(mereweth) - calculate z body des
+    this->omega_b__des(2) = 0.0;
+    
     // NOTE(mereweth) - commanded attitude is set above, so give error code if saturated
     return this->saturateAngular();
 }
@@ -209,18 +230,35 @@ int LeeControl::
     for (unsigned int i = 0; i < 3; i++) {
         (*alpha_b__comm)(i) = 0.0;
         if (mask & (1 << i)) {
-  	    FloatingPoint angle = 0.0;
-	    getUnitAngle(&angle, this->w_R_b, i);
-  	    FloatingPoint angle_des = 0.0;
-	    getUnitAngle(&angle_des, this->w_R_b__des, i);
-
-	    FloatingPoint angleDiff = angle_des - angle;
-	    wrapAngle(&angleDiff);
-	    (*alpha_b__comm)(i) += angleDiff * this->k_R(i);
-	    (*alpha_b__comm)(i) += e_omega(i) * this->k_omega(i);
-	}
+            FloatingPoint angle = 0.0;
+            getUnitAngle(&angle, this->w_R_b, i);
+            FloatingPoint angle_des = 0.0;
+            getUnitAngle(&angle_des, this->w_R_b__des, i);
+            
+            FloatingPoint angleDiff = angle_des - angle;
+            wrapAngle(&angleDiff);
+            (*alpha_b__comm)(i) += angleDiff * this->k_R(i);
+            (*alpha_b__comm)(i) += e_omega(i) * this->k_omega(i);
+        }
     }
     
+    return 0;
+}
+
+int LeeControl::
+  GetDesired(Vector3* x_w__des,
+             Quaternion* w_q_b__des,
+             Vector3* v_b__des,
+             Vector3* omega_b__des) {
+    FW_ASSERT(x_w__des);
+    FW_ASSERT(w_q_b__des);
+    FW_ASSERT(v_b__des);
+    FW_ASSERT(omega_b__des);
+
+    *x_w__des = this->x_w__des;
+    *w_q_b__des = this->w_R_b__des;
+    *v_b__des = this->w_R_b.inverse() * this->v_w__des;
+    *omega_b__des = this->omega_b__des;
     return 0;
 }
   
@@ -257,10 +295,12 @@ int LeeControl::
 }
 
 int LeeControl::
-  SetPositionLinVel(const Vector3& x_w,
-                    const Vector3& v_b) {
+  SetPositionLinVelAcc(const Vector3& x_w,
+                       const Vector3& v_b,
+                       const Vector3& a_b) {
     this->x_w = x_w;
     this->v_b = v_b;
+    this->a_b = a_b;
     return 0;
 
     // TODO(mereweth) - sanitize inputs; return code
@@ -273,10 +313,12 @@ int LeeControl::
 int LeeControl::
   SetPositionDes(const Vector3& x_w__des,
                  const Vector3& v_w__des,
-                 const Vector3& a_w__des) {
+                 const Vector3& a_w__des,
+                 const Vector3& j_w__des) {
     this->x_w__des = x_w__des;
     this->v_w__des = v_w__des;
     this->a_w__des = a_w__des;
+    this->j_w__des = j_w__des;
     
     return this->saturateLinear();
 
@@ -305,9 +347,11 @@ int LeeControl::
 
 int LeeControl::
   SetVelocityDes(const Vector3& v_w__des,
-                 const Vector3& a_w__des) {
+                 const Vector3& a_w__des,
+                 const Vector3& j_w__des) {
     this->v_w__des = v_w__des;
     this->a_w__des = a_w__des;
+    this->j_w__des = j_w__des;
     
     return this->saturateLinear();
 

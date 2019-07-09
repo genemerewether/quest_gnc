@@ -80,17 +80,20 @@ int ImuInteg::
   GetState(Vector3* x_w,
            Quaternion* w_q_b,
            Vector3* v_b,
-           Vector3* omega_b) {
+           Vector3* omega_b,
+           Vector3* a_b) {
     FW_ASSERT(x_w);
     FW_ASSERT(w_q_b);
     FW_ASSERT(v_b);
     FW_ASSERT(omega_b);
+    FW_ASSERT(a_b);
 
     *x_w = this->x_w;
     *w_q_b = this->w_R_b;
     w_q_b->normalize();
     *v_b = this->v_b;
     *omega_b = this->omega_b;
+    *a_b = this->a_b;
 
     return 0;
 }
@@ -227,10 +230,11 @@ int ImuInteg::
 
         // -------------------------- Position kinematics --------------------------
 
-        const Vector3 a_b__temp = imu->a_b - this->aBias - this->w_R_b.transpose()
-                                  * Vector3(0, 0, this->wParams.gravityMag);
+        // store unbiased linear acceleration for odometry
+        this->a_b = imu->a_b - this->aBias - this->w_R_b.transpose()
+                    * Vector3(0, 0, this->wParams.gravityMag);
 
-        this->v_b += a_b__temp * this->dt;
+        this->v_b += this->a_b * this->dt;
         this->x_w += this->w_R_b * this->v_b * this->dt;
 
         this->w_R_b = w_R_b__temp;

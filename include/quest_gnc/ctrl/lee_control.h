@@ -78,7 +78,12 @@ class LeeControl {
                            bool yawVelOnly = false);
 
     int GetAngAxisAlignedCommand(Vector3* alpha_b__comm,
-			  	 unsigned char mask);
+                                 unsigned char mask);
+
+    int GetDesired(Vector3* x_w__des,
+                   Quaternion* w_q_b__des,
+                   Vector3* v_b__des,
+                   Vector3* omega_b__des);
 
   // ----------------------------------------------------------------------
   // Feedback setters
@@ -92,8 +97,9 @@ class LeeControl {
     int SetAttitudeAngVel(const Quaternion& w_q_b,
                           const Vector3& omega_b);
 
-    int SetPositionLinVel(const Vector3& x_w,
-                          const Vector3& v_b);
+    int SetPositionLinVelAcc(const Vector3& x_w,
+                             const Vector3& v_b,
+                             const Vector3& a_b);
 
   // ----------------------------------------------------------------------
   // Command setters
@@ -101,10 +107,12 @@ class LeeControl {
 
     int SetPositionDes(const Vector3& x_w__des,
                        const Vector3& v_w__des,
-                       const Vector3& a_w__des);
+                       const Vector3& a_w__des,
+                       const Vector3& j_w__des);
 
     int SetVelocityDes(const Vector3& v_w__des,
-                       const Vector3& a_w__des);
+                       const Vector3& a_w__des,
+                       const Vector3& j_w__des);
 
     int SetYawDes(FloatingPoint yaw_des);
 
@@ -162,6 +170,8 @@ class LeeControl {
     FloatingPoint yaw;
 
     Vector3 v_b;
+    
+    Vector3 a_b;
 
     Vector3 omega_b;
 
@@ -176,6 +186,9 @@ class LeeControl {
     //! position/velocity modes only
     Vector3 a_w__des;
 
+    //! position/velocity modes only
+    Vector3 j_w__des;
+    
     //! position/velocity modes only
     FloatingPoint yaw_des;
 

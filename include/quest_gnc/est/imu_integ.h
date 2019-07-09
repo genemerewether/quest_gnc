@@ -54,7 +54,8 @@ class ImuInteg {
     int GetState(Vector3* x_w,
                  Quaternion* w_q_b,
                  Vector3* v_b,
-                 Vector3* omega_b);
+                 Vector3* omega_b,
+                 Vector3* a_b);
 
   // ----------------------------------------------------------------------
   // Input setters
@@ -107,6 +108,8 @@ class ImuInteg {
     Vector3 v_b;
 
     Vector3 omega_b;
+
+    Vector3 a_b;
 
     // Sensor Parameters
 
