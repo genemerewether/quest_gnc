@@ -56,7 +56,8 @@ void att_filter_bind(py::module &m) { // NOLINT()
   
       .def("GetState", [](AttFilter &a) { Vector3 x_w; Quaternion w_q_b;
                                           Vector3 v_b; Vector3 omega_b;
-                                          int r = a.GetState(&x_w, &w_q_b, &v_b, &omega_b);
+                                          Vector3 a_b;
+                                          int r = a.GetState(&x_w, &w_q_b, &v_b, &omega_b, &a_b);
                                           const Matrix3 w_R_b(w_q_b);
                                           const Vector3 w_euler_b = w_R_b.eulerAngles(2, 1, 0);
 					  Eigen::Vector4d w_quat_as_vec_b(w_q_b.x(),
@@ -68,6 +69,7 @@ void att_filter_bind(py::module &m) { // NOLINT()
 								 w_quat_as_vec_b,
 								 v_b,
 								 omega_b,
+                                 a_b,
 								 r);
       })
 
