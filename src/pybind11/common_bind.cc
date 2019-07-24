@@ -16,12 +16,16 @@
 // ======================================================================
 
 #include "quest_gnc/utils/common.h"
+#include "quest_gnc/utils/world_params.h"
+#include "quest_gnc/utils/rigidbody_model.h"
+#include "quest_gnc/utils/multirotor_model.h"
 
 #include <pybind11/eigen.h>
 #include <pybind11/pybind11.h>
 namespace py = pybind11;
 
 using namespace quest_gnc;
+using namespace quest_gnc::multirotor;
 using namespace pybind11::literals; // NOLINT()
 
 void common_bind(py::module &m) { // NOLINT()
@@ -31,4 +35,26 @@ void common_bind(py::module &m) { // NOLINT()
       .def_readwrite("t", &ImuSample::t)
       .def_readwrite("omega_b", &ImuSample::omega_b)
       .def_readwrite("a_b", &ImuSample::a_b);
+
+  py::class_<WorldParams>(m, "WorldParams")
+      .def(py::init<>())
+
+      .def_readwrite("gravityMag", &WorldParams::gravityMag)
+      .def_readwrite("atmosphereDensity", &WorldParams::atmosphereDensity);
+
+  py::class_<RigidBodyModel>(m, "RigidBodyModel")
+      .def(py::init<>())
+
+      .def_readwrite("mass", &RigidBodyModel::mass)
+      .def_readwrite("Ixx", &RigidBodyModel::Ixx)
+      .def_readwrite("Iyy", &RigidBodyModel::Iyy)
+      .def_readwrite("Izz", &RigidBodyModel::Izz)
+      .def_readwrite("Ixy", &RigidBodyModel::Ixy)
+      .def_readwrite("Ixz", &RigidBodyModel::Ixz)
+      .def_readwrite("Iyz", &RigidBodyModel::Iyz);
+
+  py::class_<MultirotorModel>(m, "MultirotorModel")
+      .def(py::init<>())
+
+      .def_readwrite("rigidBody", &MultirotorModel::rigidBody);
 }
