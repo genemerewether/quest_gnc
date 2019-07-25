@@ -114,7 +114,10 @@ class LeeControl {
                        const Vector3& a_w__des,
                        const Vector3& j_w__des);
 
-    int SetYawDes(FloatingPoint yaw_des);
+    int SetYawDes(FloatingPoint yaw_des,
+                  FloatingPoint yawdot_des);
+
+    int SetYawDotDes(FloatingPoint yawdot_des);
 
     int SetAttitudeDes(const Quaternion& w_q_b__des,
                        const Vector3& omega_b__des,
@@ -191,6 +194,7 @@ class LeeControl {
     
     //! position/velocity modes only
     FloatingPoint yaw_des;
+    FloatingPoint yawdot_des;
 
     //! explicitly set in attitude mode only
     Matrix3 w_R_b__des;

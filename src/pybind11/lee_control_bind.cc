@@ -71,10 +71,14 @@ void lee_control_bind(py::module &m) { // NOLINT()
            "x_w__des"_a, "v_w__des"_a, "alpha_b__des"_a)
       .def("SetVelocityDes", &LeeControl::SetVelocityDes,
            "v_w__des"_a, "a_w__des"_a, "j_w__des"_a)
+      .def("SetYawDes", &LeeControl::SetYawDes,
+           "yaw_des"_a, "yawdot_des"_a)
+      .def("SetYawDotDes", &LeeControl::SetYawDotDes,
+           "yawdot_des"_a)
       .def("SetAttitudeDes", &LeeControl::SetAttitudeDes,
            "w_q_b__des"_a, "omega_b__des"_a,
-	   "rpVelOnly"_a, "yawVelOnly"_a,
-	   "doSaturation"_a)
+           "rpVelOnly"_a, "yawVelOnly"_a,
+           "doSaturation"_a)
       .def("SetAttitudeAngAccelDes", &LeeControl::SetAttitudeAngAccelDes,
            "w_q_b__des"_a, "omega_b__des"_a, "alpha_b__des"_a);
 }

@@ -326,10 +326,14 @@ int LeeControl::
 }
 
 int LeeControl::
-  SetYawDes(FloatingPoint yaw_des) {
+  SetYawDes(FloatingPoint yaw_des,
+            FloatingPoint yawdot_des) {
     wrapAngle(&yaw_des);  
     FloatingPoint yawDiff = yaw_des - this->yaw;
     wrapAngle(&yawDiff);
+
+    // TODO(mereweth) - saturate yawdot_des
+    this->yawdot_des = yawdot_des;
 
     if (fabs(yawDiff) > this->sat_yaw) {
         DEBUG_PRINT("yawDiff %f, yaw_des %f, this->yaw %f\n",
@@ -343,6 +347,14 @@ int LeeControl::
     }
 
     // TODO(mereweth) - sanitize inputs; return code
+}
+
+int LeeControl::
+  SetYawDotDes(FloatingPoint yawdot_des) {
+    // TODO(mereweth) - saturate yawdot_des
+    this->yawdot_des = yawdot_des;
+
+    return 0;
 }
 
 int LeeControl::
