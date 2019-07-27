@@ -79,14 +79,14 @@ class AttFilter {
     int SetUpdate(double tValid,
                   const Vector3& x_w,
                   const Quaternion& w_q_b,
-                  const Vector3& v_w,
+                  const Vector3& v_b,
                   const Vector3& wBias,
                   const Vector3& aBias);
 
     int SetUpdate(double tValid,
                   const Vector3& x_w,
                   const Quaternion& w_q_b,
-                  const Vector3& v_w,
+                  const Vector3& v_b,
                   const Vector3& wBias,
                   const Vector3& aBias,
                   const Quaternion& b_q_g,

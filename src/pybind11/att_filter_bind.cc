@@ -82,11 +82,11 @@ void att_filter_bind(py::module &m) { // NOLINT()
       .def("SetUpdate", (int (AttFilter::*)(double tValid,
 					    const Vector3& x_w,
 					    const Quaternion& w_q_b,
-					    const Vector3& v_w,
+					    const Vector3& v_b,
 					    const Vector3& wBias,
 					    const Vector3& aBias)) &AttFilter::SetUpdate,
 	   "tValid"_a,
-	   "x_w"_a, "w_q_b"_a, "v_w"_a,
+	   "x_w"_a, "w_q_b"_a, "v_b"_a,
 	   "wBias"_a, "aBias"_a)
     
 // ----------------------------------------------------------------------

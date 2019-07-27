@@ -121,7 +121,7 @@ int ImuInteg::
   SetUpdate(double tValid,
             const Vector3& x_w,
             const Quaternion& w_q_b,
-            const Vector3& v_w,
+            const Vector3& v_b,
             const Vector3& wBias,
             const Vector3& aBias) {
     // could only happen with out-of-order state update data
@@ -145,7 +145,7 @@ int ImuInteg::
     this->tLastIntegrated = tValid;
     this->x_w = x_w;
     this->w_R_b = w_q_b.normalized().toRotationMatrix();
-    this->v_b = this->w_R_b.transpose() * v_w;
+    this->v_b = v_b;
     this->wBias = wBias;
     this->aBias = aBias;
 
@@ -156,13 +156,13 @@ int ImuInteg::
   SetUpdate(double tValid,
             const Vector3& x_w,
             const Quaternion& w_q_b,
-            const Vector3& v_w,
+            const Vector3& v_b,
             const Vector3& wBias,
             const Vector3& aBias,
             const Quaternion& b_q_g,
             const Matrix3& aGyrInv,
             const Matrix3& aAccInv) {
-    int stat = SetUpdate(tValid, x_w, w_q_b, v_w, wBias, aBias);
+    int stat = SetUpdate(tValid, x_w, w_q_b, v_b, wBias, aBias);
     if (stat) {
         return stat;
     }
