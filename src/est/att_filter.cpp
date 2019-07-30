@@ -52,6 +52,7 @@ AttFilter::AttFilter() :
     omega_b__prev(),
     magBuf(),
     tLastIntegrated(0.0),
+    tLast(0.0),
     tLastUpdate(0.0),
     x_w(0, 0, 0),
     b_q_w(Quaternion::Identity()),
@@ -179,12 +180,12 @@ int AttFilter::
 int AttFilter::
   AddImu(const ImuSample& imu) {
     // could only happen with out-of-order IMU data
-    if (imu.t < tLastUpdate) {
+    if (imu.t <= tLastUpdate) {
         return -1;
     }
     // could only happen with out-of-order IMU data
     if (this->imuBuf.size() &&
-        (imu.t < this->imuBuf.getLastIn()->t)) {
+        (imu.t <= this->imuBuf.getLastIn()->t)) {
         return -2;
     }
     
@@ -196,12 +197,12 @@ int AttFilter::
 int AttFilter::
   AddMag(const MagSample& mag) {
     // could only happen with out-of-order MAG data
-    if (mag.t < tLastUpdate) {
+    if (mag.t <= tLastUpdate) {
         return -1;
     }
     // could only happen with out-of-order MAG data
     if (this->magBuf.size() &&
-        (mag.t < this->magBuf.getLastIn()->t)) {
+        (mag.t <= this->magBuf.getLastIn()->t)) {
         return -2;
     }
 
@@ -216,7 +217,7 @@ int AttFilter::
             const Vector3& wBias,
             const Vector3& aBias) {
     // could only happen with out-of-order state update data
-    if (tValid < tLastUpdate) {
+    if (tValid <= tLastUpdate) {
         return -1;
     }
 
@@ -232,6 +233,8 @@ int AttFilter::
     // TODO(mereweth) - check for state update after most recent IMU sample?
     // should only be possible in case of bad clock sync
 
+    this->tLast = this->imuBuf.getFirstIn()->t;
+      
     this->tLastUpdate = tValid;
     this->tLastIntegrated = tValid;
     this->x_w = x_w;
@@ -299,7 +302,9 @@ int AttFilter::
     // discard samples from before last update
     while (this->imuBuf.size() &&
            (this->tLastUpdate > this->imuBuf.getFirstIn()->t)) {
-        this->imuBuf.remove();
+        quest_gnc::ImuSample imu;
+        this->imuBuf.dequeue(&imu);
+        this->tLast = imu.t;
     }
 
     while (this->magBuf.size() &&
@@ -315,10 +320,23 @@ int AttFilter::
         const quest_gnc::ImuSample* imu = this->imuBuf.get(i);
         FW_ASSERT(imu != NULL);
 
-        // TODO(mereweth) - parameter for small time delta
-        if (imu->t < this->tLastIntegrated + 1e-6) {
+        // TODO(mereweth) - parameter for small time delta - check for duplicate IMU
+        if (imu->t < this->tLast + 1e-6) {
+            DEBUG_PRINT("dup imu at %f in att_filter\n", imu->t);
             continue;
         }
+
+        FloatingPoint _dt = imu->t - this->tLast;
+        if (this->tLastUpdate > this->tLast) { // update came halfway through imu sampling period
+            _dt = imu->t - this->tLastUpdate;
+        }
+        if (fabs(this->dt - _dt) > this->dt * 0.01) {
+            // NOTE(mereweth) - evr that dt was more than 1% off
+            DEBUG_PRINT("att_filter nominal dt %f, actual %f\n",
+                        this->dt, _dt);
+            _dt = this->dt;
+        }
+        this->tLast = imu.t;
         
         this->tLastIntegrated = imu->t;
 
@@ -368,7 +386,7 @@ int AttFilter::
         omega_b__pureQuat.y() = omega_b__unbias(1);
         omega_b__pureQuat.z() = omega_b__unbias(2);
         Quaternion b_q_w__pred = omega_b__pureQuat * this->b_q_w;
-        b_q_w__pred.coeffs() *= -0.5 * this->dt;
+        b_q_w__pred.coeffs() *= -0.5 * _dt;
         b_q_w__pred.coeffs() += this->b_q_w.coeffs();
         b_q_w__pred.normalize();
 
@@ -440,8 +458,8 @@ int AttFilter::
         this->a_b = imu->a_b - this->aBias - this->b_q_w
                     * Vector3(0, 0, this->wParams.gravityMag);
 
-        this->v_b += this->a_b * this->dt;
-        this->x_w += this->b_q_w.conjugate() * this->v_b * this->dt;
+        this->v_b += this->a_b * _dt;
+        this->x_w += this->b_q_w.conjugate() * this->v_b * _dt;
 
         // NOTE(mereweth) - store final result of attitude filter step after position kinematics
         this->b_q_w = b_q_w__pred * b_q_w__corr;

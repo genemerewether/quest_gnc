@@ -97,6 +97,8 @@ class ImuInteg {
 
     double tLastIntegrated;
     
+    double tLast;
+
     // Odometry
 
     double tLastUpdate;

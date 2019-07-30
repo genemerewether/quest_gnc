@@ -126,6 +126,8 @@ class AttFilter {
 
     double tLastIntegrated;
     
+    double tLast;
+
     // Odometry
 
     double tLastUpdate;
