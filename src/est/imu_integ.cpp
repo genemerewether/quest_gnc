@@ -38,6 +38,7 @@ ImuInteg::ImuInteg() :
     dt(0.0),
     imuBuf(),
     tLastIntegrated(0.0),
+    tLast(0.0),
     tLastUpdate(0.0),
     x_w(0, 0, 0), w_R_b(Matrix3::Identity()),
     v_b(0, 0, 0), omega_b(0, 0, 0),
@@ -105,12 +106,12 @@ int ImuInteg::
 int ImuInteg::
   AddImu(const ImuSample& imu) {
     // could only happen with out-of-order IMU data
-    if (imu.t < tLastUpdate) {
+    if (imu.t <= tLastUpdate) {
         return -1;
     }
     // could only happen with out-of-order IMU data
     if (this->imuBuf.size() &&
-        (imu.t < this->imuBuf.getLastIn()->t)) {
+        (imu.t <= this->imuBuf.getLastIn()->t)) {
         return -2;
     }
 
@@ -125,7 +126,7 @@ int ImuInteg::
             const Vector3& wBias,
             const Vector3& aBias) {
     // could only happen with out-of-order state update data
-    if (tValid < tLastUpdate) {
+    if (tValid <= tLastUpdate) {
         return -1;
     }
 
@@ -140,6 +141,8 @@ int ImuInteg::
 
     // TODO(mereweth) - check for state update after most recent IMU sample?
     // should only be possible in case of bad clock sync
+    
+    this->tLast = this->imuBuf.getFirstIn()->t;
 
     this->tLastUpdate = tValid;
     this->tLastIntegrated = tValid;
@@ -204,7 +207,9 @@ int ImuInteg::
     // discard IMU samples from before last update
     while (this->imuBuf.size() &&
            (this->tLastUpdate > this->imuBuf.getFirstIn()->t)) {
-        this->imuBuf.remove();
+        quest_gnc::ImuSample imu;
+        this->imuBuf.dequeue(&imu);
+        this->tLast = imu.t;
     }
 
     // NOTE(mereweth) - need to keep all IMU samples since last update
@@ -213,10 +218,23 @@ int ImuInteg::
         const quest_gnc::ImuSample* imu = this->imuBuf.get(i);
         FW_ASSERT(imu != NULL);
 
-        // TODO(mereweth) - parameter for small time delta
-        if (imu->t < this->tLastIntegrated + 1e-6) {
+        // TODO(mereweth) - parameter for small time delta - check for duplicate IMU
+        if (imu->t < this->tLast + 1e-6) {
+            DEBUG_PRINT("dup imu at %f in imu_integ\n", imu->t);
             continue;
         }
+        
+        FloatingPoint _dt = imu->t - this->tLast;
+        if (this->tLastUpdate > this->tLast) { // update came halfway through imu sampling period
+            _dt = imu->t - this->tLastUpdate;
+        }
+        if (fabs(this->dt - _dt) > this->dt * 0.01) {
+            // NOTE(mereweth) - evr that dt was more than 1% off
+            DEBUG_PRINT("imu_integ nominal dt %f, actual %f\n",
+                        this->dt, _dt);
+            _dt = this->dt;
+        }
+        this->tLast = imu.t;
         
         this->tLastIntegrated = imu->t;
           
