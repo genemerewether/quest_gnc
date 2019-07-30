@@ -234,7 +234,7 @@ int ImuInteg::
                         this->dt, _dt);
             _dt = this->dt;
         }
-        this->tLast = imu.t;
+        this->tLast = imu->t;
         
         this->tLastIntegrated = imu->t;
           
