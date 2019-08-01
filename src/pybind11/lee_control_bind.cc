@@ -16,11 +16,14 @@
 // ======================================================================
 
 #include "quest_gnc/ctrl/lee_control.h"
+#include "quest_gnc/utils/common.h"
 
+#include <Eigen/Geometry>
 #include <pybind11/eigen.h>
 #include <pybind11/pybind11.h>
 namespace py = pybind11;
 
+using namespace quest_gnc;
 using quest_gnc::multirotor::LeeControl;
 using quest_gnc::multirotor::MultirotorModel;
 using quest_gnc::WorldParams;
@@ -49,15 +52,21 @@ void lee_control_bind(py::module &m) { // NOLINT()
            "a_w__comm"_a, "velOnly"_a)
       .def("GetAngAccelCommand", &LeeControl::GetAngAccelCommand,
            "alpha_b__comm"_a, "rpVelOnly"_a, "yawVelOnly"_a)
+      // added
+      .def("GetState", &LeeControl::GetState, 
+            "x_w"_a, "w_R_b"_a, "v_b"_a, "omega_b"_a, "a_b"_a)
+      // added
+      // .def("GetDesired", &LeeControl::GetDesired,
+      //       "x_w__des"_a, "w_q_b__des"_a, "v_b__des"_a, "omega_b__des"_a)
 
 // ----------------------------------------------------------------------
 // Feedback setters
 // ----------------------------------------------------------------------
 
-      .def("SetOdometry", &LeeControl::SetOdometry,
-           "x_w"_a, "w_q_b"_a, "v_b"_a, "omega_b"_a)
-      .def("SetAttitudeAngVel", &LeeControl::SetAttitudeAngVel,
-           "w_q_b"_a, "omega_b"_a)
+      // .def("SetOdometry", &LeeControl::SetOdometry,
+      //      "x_w"_a, "w_q_b"_a, "v_b"_a, "omega_b"_a)
+      // .def("SetAttitudeAngVel", &LeeControl::SetAttitudeAngVel,
+      //      "w_q_b"_a, "omega_b"_a)
       .def("SetPositionLinVelAcc", &LeeControl::SetPositionLinVelAcc,
            "x_w"_a, "v_b"_a, "a_b"_a)
 
@@ -80,5 +89,72 @@ void lee_control_bind(py::module &m) { // NOLINT()
            "rpVelOnly"_a, "yawVelOnly"_a,
            "doSaturation"_a)
       .def("SetAttitudeAngAccelDes", &LeeControl::SetAttitudeAngAccelDes,
-           "w_q_b__des"_a, "omega_b__des"_a, "alpha_b__des"_a);
+           "w_q_b__des"_a, "omega_b__des"_a, "alpha_b__des"_a)
+
+
+// add lambda functions to default getters and setters
+
+      .def("GetDesired", [](LeeControl &lee) 
+        { Vector3 x_w__des; Quaternion w_q_b__des;
+           Vector3 v_b__des; Vector3 omega_b__des;
+           int r = lee.GetDesired(&x_w__des, &w_q_b__des, &v_b__des, &omega_b__des);
+           const Matrix3 w_R_b(w_q_b__des);
+           const Vector3 w_euler_b = w_R_b.eulerAngles(2, 1, 0);
+           Eigen::Vector4d w_quat_as_vec_b(w_q_b__des.x(),
+            w_q_b__des.y(),
+            w_q_b__des.z(),
+            w_q_b__des.w());
+           return std::make_tuple(x_w__des,
+            w_euler_b,
+            w_quat_as_vec_b,
+            v_b__des,
+            omega_b__des,
+            r);
+      })
+
+      .def("SetOdometry", [](LeeControl &lee, Vector3 &x_w, Eigen::Vector4d &w_q_b_vec, Vector3 &v_b, Vector3 &omega_b) 
+        { Quaternion w_q_b(w_q_b_vec(3),
+            w_q_b_vec(0),
+            w_q_b_vec(1),
+            w_q_b_vec(2));
+          int r = lee.SetOdometry(x_w, w_q_b, v_b, omega_b);
+          return r;
+      })
+
+      .def("SetAttitudeAngVel", [](LeeControl &lee, Eigen::Vector4d &w_q_b_vec, Vector3 &omega_b) 
+        { Quaternion w_q_b(w_q_b_vec(3),
+            w_q_b_vec(0),
+            w_q_b_vec(1),
+            w_q_b_vec(2));
+          int r = lee.SetAttitudeAngVel(w_q_b, omega_b);
+          return r;
+      })
+
+      .def("SetAttitudeDes", [](LeeControl &lee, Eigen::Vector4d &w_q_b_vec, Vector3 &omega_b__des,
+                            bool rpVelOnly, bool yawVelOnly) 
+        { Quaternion w_q_b__des(w_q_b_vec(3),
+            w_q_b_vec(0),
+            w_q_b_vec(1),
+            w_q_b_vec(2));
+          int r = lee.SetAttitudeDes(w_q_b__des, omega_b__des, rpVelOnly, yawVelOnly);
+          return r;
+      })
+
+      .def("SetAttitudeAngAccelDes", [](LeeControl &lee, Eigen::Vector4d &w_q_b_vec, 
+                                    Vector3 &omega_b__des, Vector3 &alpha_b__des) 
+        { Quaternion w_q_b__des(w_q_b_vec(3),
+            w_q_b_vec(0),
+            w_q_b_vec(1),
+            w_q_b_vec(2));
+          int r = lee.SetAttitudeAngAccelDes(w_q_b__des, omega_b__des, alpha_b__des);
+          return r;
+      })
+
+// ----------------------------------------------------------------------
+// (formerly) Private helper functions
+// ----------------------------------------------------------------------
+      // added
+      .def("so3Error", &LeeControl::so3Error,
+            "e_R"_a, "e_omega"_a, "rpVelOnly"_a, "yawVelOnly"_a);
+
 }

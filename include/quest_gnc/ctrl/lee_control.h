@@ -80,6 +80,14 @@ class LeeControl {
     int GetAngAxisAlignedCommand(Vector3* alpha_b__comm,
                                  unsigned char mask);
 
+    // changed
+
+    int GetState(Vector3* x_w,
+                 Matrix3* w_R_b,
+                 Vector3* v_b,
+                 Vector3* omega_b,
+                 Vector3* a_b);
+
     int GetDesired(Vector3* x_w__des,
                    Quaternion* w_q_b__des,
                    Vector3* v_b__des,
@@ -133,11 +141,17 @@ class LeeControl {
                                const Vector3& v_w__des,
                                const Vector3& alpha_b__des);
 
+    // TODO(mereweth) - factor out into utils?
+    // NOTE(mereweth) - uses, but does not modify, member variable
+    // NOTE(rhester) - moved from private to allow binding to python
+    void so3Error(Vector3* e_R, Vector3* e_omega,
+                  bool rpVelOnly = false, bool yawVelOnly = false);
+
  private:
     // TODO(mereweth) - factor out into utils?
     // NOTE(mereweth) - uses, but does not modify, member variable
-    void so3Error(Vector3* e_R, Vector3* e_omega,
-                  bool rpVelOnly = false, bool yawVelOnly = false);
+    // void so3Error(Vector3* e_R, Vector3* e_omega,
+                  // bool rpVelOnly = false, bool yawVelOnly = false);
     
     int saturateAngular(bool rpVelOnly = false,
                         bool yawVelOnly = false); // NOTE(mereweth) - updates member variable

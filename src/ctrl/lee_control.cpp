@@ -123,7 +123,7 @@ int LeeControl::
     DEBUG_PRINT("sat_R [%f, %f, %f]\n",
                 this->sat_R(0), this->sat_R(1), this->sat_R(2));
     DEBUG_PRINT("sat_omega [%f, %f, %f]\n",
-                this->sat_omega(0), this->sat_omega(1), this->sat_omega(2));
+                this->sat_omega(0), this->sat_omega(1), this->sat_omeg(*a_w__comm)(1));
     return 0;
 }
 
@@ -186,7 +186,48 @@ int LeeControl::
     // x_body dot prod z_body_dot
     this->omega_b__des(1) = this->w_R_b__des.col(0).dot(a_w__comm_dot) / a_w__comm->norm();
     // TODO(mereweth) - calculate z body des
-    this->omega_b__des(2) = 0.0;
+    // this->omega_b__des(2) = 0.0;
+
+    // TODO(rhester) add your expression here after the sim works
+    // NOTE: lee_control.cpp and lee_control.h in quest/quest_gnc differ from quest_gnc
+    // TODO(rhester) is there any point in putting y_b.transpose() in terms of yaw? seems like using
+    //               the y column of w_R_b__des and calculating x_b_dot would be sufficient
+
+    Vector3 y_b;
+    y_b(0) = -w_R_b__des(2, 2) * sin(yaw_des);
+    y_b(1) = w_R_b__des(2, 2) * cos(yaw_des);
+    y_b(2) = w_R_b__des(0, 2) * sin(yaw_des) - w_R_b__des(1, 2) * cos(yaw_des);
+    y_b.normalize();
+
+    Vector3 x;
+    x(0) = (pow((*a_w__comm)(2), 2) + pow((*a_w__comm)(1), 2)) * cos(yaw_des) - ((*a_w__comm)(0) * (*a_w__comm)(1)) * sin(yaw_des);
+    x(1) = -((*a_w__comm)(0) * (*a_w__comm)(1)) * cos(yaw_des) + (pow((*a_w__comm)(0), 2) + pow((*a_w__comm)(2), 2)) * sin(yaw_des);
+    x(2) = -((*a_w__comm)(2) * (*a_w__comm)(0)) * cos(yaw_des) - ((*a_w__comm)(2) * (*a_w__comm)(1)) * sin(yaw_des);
+
+    Vector3 xdot;
+    xdot(0) = (2 * (*a_w__comm)(1) * a_w__comm_dot(1) + 2 * (*a_w__comm)(2) * a_w__comm_dot(2)) * cos(yaw_des)
+              - (pow((*a_w__comm)(1) ,2) + pow((*a_w__comm)(2), 2)) * sin(yaw_des) * yawdot_des
+              - ((*a_w__comm)(0) * (*a_w__comm)(1)) * cos(yaw_des) * yawdot_des
+              - ((*a_w__comm)(0) * a_w__comm_dot(1)) * sin(yaw_des)
+              - ((*a_w__comm)(1) * a_w__comm_dot(0)) * sin(yaw_des);
+    xdot(1) = (2 * (*a_w__comm)(0) * a_w__comm_dot(0) + 2 * (*a_w__comm)(2) * a_w__comm_dot(2)) * sin(yaw_des)
+              + (pow((*a_w__comm)(0), 2) + pow((*a_w__comm)(2), 2)) * cos(yaw_des) * yawdot_des
+              + ((*a_w__comm)(0) * (*a_w__comm)(1)) * sin(yaw_des) * yawdot_des
+              - ((*a_w__comm)(0) * a_w__comm_dot(1)) * cos(yaw_des)
+              - ((*a_w__comm)(1) * a_w__comm_dot(0)) * cos(yaw_des);
+    xdot(2) = ((*a_w__comm)(0) * (*a_w__comm)(2)) * sin(yaw_des) * yawdot_des
+              - ((*a_w__comm)(0) * a_w__comm_dot(2)) * cos(yaw_des)
+              - ((*a_w__comm)(1) * (*a_w__comm)(2)) * cos(yaw_des) * yawdot_des
+              - ((*a_w__comm)(1) * a_w__comm_dot(2)) * sin(yaw_des)
+              - ((*a_w__comm)(2) * a_w__comm_dot(1)) * sin(yaw_des)
+              - ((*a_w__comm)(2) * a_w__comm_dot(0)) * cos(yaw_des);
+
+    Vector3 x_b_dot;
+    x_b_dot(0) = xdot(0) / x.norm() - x(0) * x.transpose().dot(xdot) / pow(x.norm(), 3);
+    x_b_dot(1) = xdot(1) / x.norm() - x(1) * x.transpose().dot(xdot) / pow(x.norm(), 3);
+    x_b_dot(2) = xdot(2) / x.norm() - x(2) * x.transpose().dot(xdot) / pow(x.norm(), 3);
+
+    this->omega_b__des(2) = y_b.transpose().dot(x_b_dot);
     
     // NOTE(mereweth) - commanded attitude is set above, so give error code if saturated
     return this->saturateAngular();
@@ -242,6 +283,28 @@ int LeeControl::
         }
     }
     
+    return 0;
+}
+
+// changed
+
+int LeeControl::GetState(Vector3* x_w,
+           Matrix3* w_R_b,
+           Vector3* v_b,
+           Vector3* omega_b,
+           Vector3* a_b) {
+    FW_ASSERT(x_w);
+    FW_ASSERT(w_R_b);
+    FW_ASSERT(v_b);
+    FW_ASSERT(omega_b);
+    FW_ASSERT(a_b);
+
+    *x_w = this->x_w;
+    *w_R_b = this->w_R_b;
+    *v_b = this->v_b;
+    *omega_b = this->omega_b;
+    *a_b = this->a_b;
+
     return 0;
 }
 
@@ -472,7 +535,7 @@ int LeeControl::
     
     DEBUG_PRINT("omega [%f, %f, %f], sat_omega [%f, %f, %f]\n",
                 this->omega_b(0), this->omega_b(1), this->omega_b(2),
-                this->sat_omega(0), this->sat_omega(1), this->sat_omega(2));
+                this->sat_omega(0), this->sat_omega(1), this->sat_omeg(*a_w__comm)(1));
     DEBUG_PRINT("omega_des [%f, %f, %f]\n",
                 this->omega_b__des(0), this->omega_b__des(1), this->omega_b__des(2));
     this->omega_b__des = this->w_R_b__des.transpose() * this->w_R_b * (this->omega_b
