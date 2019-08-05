@@ -54,8 +54,21 @@ LeeControl::~LeeControl() {
 }
 
 // ----------------------------------------------------------------------
-// Parameter, model, and gain setters
+// Parameter, model, and gain *getters and* setters
 // ----------------------------------------------------------------------
+
+// added
+
+int LeeControl::
+  GetWorldParams(FloatingPoint* gravityMag, FloatingPoint* atmosphereDensity) {
+
+    *gravityMag = this->wParams.gravityMag;
+
+    *atmosphereDensity = this->wParams.atmosphereDensity;
+
+    return 0;
+
+  }
 
 int LeeControl::
   SetWorldParams(WorldParams wParams) {
@@ -63,6 +76,26 @@ int LeeControl::
 
     return 0;
 }
+
+// added
+
+int LeeControl::
+  GetModel(FloatingPoint* mass, Matrix3* inertia) {
+
+    *mass = this->mrModel.rigidBody.mass;
+
+    (*inertia)(0, 0) = this->inertia(0, 0);
+    (*inertia)(0, 1) = this->inertia(0, 1);
+    (*inertia)(0, 2) = this->inertia(0, 2);
+    (*inertia)(1, 0) = this->inertia(1, 0);
+    (*inertia)(1, 1) = this->inertia(1, 1);
+    (*inertia)(1, 2) = this->inertia(1, 2);
+    (*inertia)(2, 0) = this->inertia(2, 0);
+    (*inertia)(2, 1) = this->inertia(2, 1);
+    (*inertia)(2, 2) = this->inertia(2, 2);
+
+    return 0;
+  }
 
 int LeeControl::
   SetModel(MultirotorModel mrModel) {
@@ -89,6 +122,19 @@ int LeeControl::
 
     return 0;
 }
+
+// added
+
+int LeeControl::
+  GetGains(Vector3* k_x, Vector3* k_v, Vector3* k_R, Vector3* k_omega) {
+
+    *k_x = this->k_x;
+    *k_v = this->k_v;
+    *k_R = this->k_R;
+    *k_omega = this->k_omega;
+
+    return 0;
+  }
 
 int LeeControl::
   SetGains(const Vector3& k_x,

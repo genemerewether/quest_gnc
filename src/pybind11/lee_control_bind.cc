@@ -46,15 +46,15 @@ void lee_control_bind(py::module &m) { // NOLINT()
 // Thrust and moment getters
 // ----------------------------------------------------------------------
 
-      .def("GetAccelAngAccelCommand", &LeeControl::GetAccelAngAccelCommand,
-           "a_w__comm"_a, "alpha_b__comm"_a)
+      // .def("GetAccelAngAccelCommand", &LeeControl::GetAccelAngAccelCommand,
+      //      "a_w__comm"_a, "alpha_b__comm"_a)
       .def("GetAccelCommand", &LeeControl::GetAccelCommand,
            "a_w__comm"_a, "velOnly"_a)
-      .def("GetAngAccelCommand", &LeeControl::GetAngAccelCommand,
-           "alpha_b__comm"_a, "rpVelOnly"_a, "yawVelOnly"_a)
+      // .def("GetAngAccelCommand", &LeeControl::GetAngAccelCommand,
+      //      "alpha_b__comm"_a, "rpVelOnly"_a, "yawVelOnly"_a)
       // added
-      .def("GetState", &LeeControl::GetState, 
-            "x_w"_a, "w_R_b"_a, "v_b"_a, "omega_b"_a, "a_b"_a)
+      // .def("GetState", &LeeControl::GetState, 
+      //       "x_w"_a, "w_R_b"_a, "v_b"_a, "omega_b"_a, "a_b"_a)
       // added
       // .def("GetDesired", &LeeControl::GetDesired,
       //       "x_w__des"_a, "w_q_b__des"_a, "v_b__des"_a, "omega_b__des"_a)
@@ -91,8 +91,50 @@ void lee_control_bind(py::module &m) { // NOLINT()
       .def("SetAttitudeAngAccelDes", &LeeControl::SetAttitudeAngAccelDes,
            "w_q_b__des"_a, "omega_b__des"_a, "alpha_b__des"_a)
 
+// ----------------------------------------------------------------------
+// Added lambdas
+// ----------------------------------------------------------------------
 
-// add lambda functions to default getters and setters
+      .def("GetModel", [](LeeControl &lee)
+        { FloatingPoint mass; Matrix3 inertia;
+          int r = lee.GetModel(&mass, &inertia);
+          return std::make_tuple(
+            mass,
+            inertia,
+            r);
+      })
+
+      .def("GetWorldParams", [](LeeControl &lee)
+        { FloatingPoint gravityMag; FloatingPoint atmosphereDensity;
+          int r = lee.GetWorldParams(&gravityMag, &atmosphereDensity);
+          return std::make_tuple(
+            gravityMag,
+            atmosphereDensity,
+            r);
+      })
+
+      .def("GetGains", [](LeeControl &lee)
+        { Vector3 k_x; Vector3 k_v; Vector3 k_R; Vector3 k_omega;
+          int r = lee.GetGains(&k_x, &k_v, &k_R, &k_omega);
+          return std::make_tuple(
+            k_x,
+            k_v,
+            k_R,
+            k_omega,
+            r);
+      })
+
+      .def("GetState", [](LeeControl &lee)
+        { Vector3 x_w; Matrix3 w_R_b; Vector3 v_b; Vector3 omega_b; Vector3 a_b;
+          int r = lee.GetState(&x_w, &w_R_b, &v_b, &omega_b, &a_b);
+          return std::make_tuple(
+            x_w,
+            w_R_b,
+            v_b,
+            omega_b,
+            a_b,
+            r);
+      })
 
       .def("GetDesired", [](LeeControl &lee) 
         { Vector3 x_w__des; Quaternion w_q_b__des;
@@ -109,6 +151,23 @@ void lee_control_bind(py::module &m) { // NOLINT()
             w_quat_as_vec_b,
             v_b__des,
             omega_b__des,
+            r);
+      })
+
+      .def("GetAngAccelCommand", [](LeeControl &lee, bool rpVelOnly, bool yawVelOnly)
+        { Vector3 alpha_b__comm;
+          int r = lee.GetAngAccelCommand(&alpha_b__comm, rpVelOnly, yawVelOnly);
+          return std::make_tuple(
+            alpha_b__comm,
+            r);
+      })
+
+      .def("GetAccelAngAccelCommand", [](LeeControl &lee)
+        { Vector3 a_w__comm; Vector3 alpha_b__comm;
+          int r = lee.GetAccelAngAccelCommand(&a_w__comm, &alpha_b__comm);
+          return std::make_tuple(
+            a_w__comm,
+            alpha_b__comm,
             r);
       })
 

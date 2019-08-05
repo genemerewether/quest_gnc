@@ -46,12 +46,18 @@ class LeeControl {
     ~LeeControl();
 
   // ----------------------------------------------------------------------
-  // Parameter, model, and gain setters
+  // Parameter, model, and gain *getters and* setters
   // ----------------------------------------------------------------------
+
+    int GetWorldParams(FloatingPoint* gravityMag, FloatingPoint* atmosphereDensity);
 
     int SetWorldParams(WorldParams wParams);
 
     int SetModel(MultirotorModel mrModel);
+
+    int GetModel(FloatingPoint* mass, Matrix3* inertia);
+
+    int GetGains(Vector3* k_x, Vector3* k_v, Vector3* k_R, Vector3* k_omega);
 
     int SetGains(const Vector3& k_x,
                  const Vector3& k_v,
@@ -80,13 +86,15 @@ class LeeControl {
     int GetAngAxisAlignedCommand(Vector3* alpha_b__comm,
                                  unsigned char mask);
 
-    // changed
+    // added
 
     int GetState(Vector3* x_w,
                  Matrix3* w_R_b,
                  Vector3* v_b,
                  Vector3* omega_b,
                  Vector3* a_b);
+
+    // added
 
     int GetDesired(Vector3* x_w__des,
                    Quaternion* w_q_b__des,
