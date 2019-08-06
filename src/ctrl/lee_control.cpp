@@ -232,51 +232,50 @@ int LeeControl::
     // x_body dot prod z_body_dot
     this->omega_b__des(1) = this->w_R_b__des.col(0).dot(a_w__comm_dot) / a_w__comm->norm();
     // TODO(mereweth) - calculate z body des
-    // this->omega_b__des(2) = 0.0;
+    this->omega_b__des(2) = 0.0;
 
     // TODO(rhester) add your expression here after the sim works
-    // NOTE: lee_control.cpp and lee_control.h in quest/quest_gnc differ from quest_gnc
     // TODO(rhester) is there any point in putting y_b.transpose() in terms of yaw? seems like using
     //               the y column of w_R_b__des and calculating x_b_dot would be sufficient
 
-    Vector3 y_b;
-    y_b(0) = -w_R_b__des(2, 2) * sin(yaw_des);
-    y_b(1) = w_R_b__des(2, 2) * cos(yaw_des);
-    y_b(2) = w_R_b__des(0, 2) * sin(yaw_des) - w_R_b__des(1, 2) * cos(yaw_des);
-    y_b.normalize();
+    // Vector3 y_b;
+    // y_b(0) = -w_R_b__des(2, 2) * sin(yaw_des);
+    // y_b(1) = w_R_b__des(2, 2) * cos(yaw_des);
+    // y_b(2) = w_R_b__des(0, 2) * sin(yaw_des) - w_R_b__des(1, 2) * cos(yaw_des);
+    // y_b.normalize();
 
-    Vector3 x;
-    x(0) = (pow((*a_w__comm)(2), 2) + pow((*a_w__comm)(1), 2)) * cos(yaw_des) - ((*a_w__comm)(0) * (*a_w__comm)(1)) * sin(yaw_des);
-    x(1) = -((*a_w__comm)(0) * (*a_w__comm)(1)) * cos(yaw_des) + (pow((*a_w__comm)(0), 2) + pow((*a_w__comm)(2), 2)) * sin(yaw_des);
-    x(2) = -((*a_w__comm)(2) * (*a_w__comm)(0)) * cos(yaw_des) - ((*a_w__comm)(2) * (*a_w__comm)(1)) * sin(yaw_des);
+    // Vector3 x;
+    // x(0) = (pow((*a_w__comm)(2), 2) + pow((*a_w__comm)(1), 2)) * cos(yaw_des) - ((*a_w__comm)(0) * (*a_w__comm)(1)) * sin(yaw_des);
+    // x(1) = -((*a_w__comm)(0) * (*a_w__comm)(1)) * cos(yaw_des) + (pow((*a_w__comm)(0), 2) + pow((*a_w__comm)(2), 2)) * sin(yaw_des);
+    // x(2) = -((*a_w__comm)(2) * (*a_w__comm)(0)) * cos(yaw_des) - ((*a_w__comm)(2) * (*a_w__comm)(1)) * sin(yaw_des);
 
-    Vector3 xdot;
-    xdot(0) = (2 * (*a_w__comm)(1) * a_w__comm_dot(1) + 2 * (*a_w__comm)(2) * a_w__comm_dot(2)) * cos(yaw_des)
-              - (pow((*a_w__comm)(1) ,2) + pow((*a_w__comm)(2), 2)) * sin(yaw_des) * yawdot_des
-              - ((*a_w__comm)(0) * (*a_w__comm)(1)) * cos(yaw_des) * yawdot_des
-              - ((*a_w__comm)(0) * a_w__comm_dot(1)) * sin(yaw_des)
-              - ((*a_w__comm)(1) * a_w__comm_dot(0)) * sin(yaw_des);
-    xdot(1) = (2 * (*a_w__comm)(0) * a_w__comm_dot(0) + 2 * (*a_w__comm)(2) * a_w__comm_dot(2)) * sin(yaw_des)
-              + (pow((*a_w__comm)(0), 2) + pow((*a_w__comm)(2), 2)) * cos(yaw_des) * yawdot_des
-              + ((*a_w__comm)(0) * (*a_w__comm)(1)) * sin(yaw_des) * yawdot_des
-              - ((*a_w__comm)(0) * a_w__comm_dot(1)) * cos(yaw_des)
-              - ((*a_w__comm)(1) * a_w__comm_dot(0)) * cos(yaw_des);
-    xdot(2) = ((*a_w__comm)(0) * (*a_w__comm)(2)) * sin(yaw_des) * yawdot_des
-              - ((*a_w__comm)(0) * a_w__comm_dot(2)) * cos(yaw_des)
-              - ((*a_w__comm)(1) * (*a_w__comm)(2)) * cos(yaw_des) * yawdot_des
-              - ((*a_w__comm)(1) * a_w__comm_dot(2)) * sin(yaw_des)
-              - ((*a_w__comm)(2) * a_w__comm_dot(1)) * sin(yaw_des)
-              - ((*a_w__comm)(2) * a_w__comm_dot(0)) * cos(yaw_des);
+    // Vector3 xdot;
+    // xdot(0) = (2 * (*a_w__comm)(1) * a_w__comm_dot(1) + 2 * (*a_w__comm)(2) * a_w__comm_dot(2)) * cos(yaw_des)
+    //           - (pow((*a_w__comm)(1) ,2) + pow((*a_w__comm)(2), 2)) * sin(yaw_des) * yawdot_des
+    //           - ((*a_w__comm)(0) * (*a_w__comm)(1)) * cos(yaw_des) * yawdot_des
+    //           - ((*a_w__comm)(0) * a_w__comm_dot(1)) * sin(yaw_des)
+    //           - ((*a_w__comm)(1) * a_w__comm_dot(0)) * sin(yaw_des);
+    // xdot(1) = (2 * (*a_w__comm)(0) * a_w__comm_dot(0) + 2 * (*a_w__comm)(2) * a_w__comm_dot(2)) * sin(yaw_des)
+    //           + (pow((*a_w__comm)(0), 2) + pow((*a_w__comm)(2), 2)) * cos(yaw_des) * yawdot_des
+    //           + ((*a_w__comm)(0) * (*a_w__comm)(1)) * sin(yaw_des) * yawdot_des
+    //           - ((*a_w__comm)(0) * a_w__comm_dot(1)) * cos(yaw_des)
+    //           - ((*a_w__comm)(1) * a_w__comm_dot(0)) * cos(yaw_des);
+    // xdot(2) = ((*a_w__comm)(0) * (*a_w__comm)(2)) * sin(yaw_des) * yawdot_des
+    //           - ((*a_w__comm)(0) * a_w__comm_dot(2)) * cos(yaw_des)
+    //           - ((*a_w__comm)(1) * (*a_w__comm)(2)) * cos(yaw_des) * yawdot_des
+    //           - ((*a_w__comm)(1) * a_w__comm_dot(2)) * sin(yaw_des)
+    //           - ((*a_w__comm)(2) * a_w__comm_dot(1)) * sin(yaw_des)
+    //           - ((*a_w__comm)(2) * a_w__comm_dot(0)) * cos(yaw_des);
 
-    Vector3 x_b_dot;
-    x_b_dot(0) = xdot(0) / x.norm() - x(0) * x.transpose().dot(xdot) / pow(x.norm(), 3);
-    x_b_dot(1) = xdot(1) / x.norm() - x(1) * x.transpose().dot(xdot) / pow(x.norm(), 3);
-    x_b_dot(2) = xdot(2) / x.norm() - x(2) * x.transpose().dot(xdot) / pow(x.norm(), 3);
+    // Vector3 x_b_dot;
+    // x_b_dot(0) = xdot(0) / x.norm() - x(0) * x.transpose().dot(xdot) / pow(x.norm(), 3);
+    // x_b_dot(1) = xdot(1) / x.norm() - x(1) * x.transpose().dot(xdot) / pow(x.norm(), 3);
+    // x_b_dot(2) = xdot(2) / x.norm() - x(2) * x.transpose().dot(xdot) / pow(x.norm(), 3);
 
-    this->omega_b__des(2) = y_b.transpose().dot(x_b_dot);
+    // this->omega_b__des(2) = y_b.transpose().dot(x_b_dot);
     
     // NOTE(mereweth) - commanded attitude is set above, so give error code if saturated
-    return this->saturateAngular();
+    return 0; // this->saturateAngular(); // TODO
 }
 
 int LeeControl::
@@ -332,7 +331,7 @@ int LeeControl::
     return 0;
 }
 
-// changed
+// added
 
 int LeeControl::GetState(Vector3* x_w,
            Matrix3* w_R_b,
@@ -353,6 +352,8 @@ int LeeControl::GetState(Vector3* x_w,
 
     return 0;
 }
+
+// added
 
 int LeeControl::
   GetDesired(Vector3* x_w__des,
@@ -429,7 +430,8 @@ int LeeControl::
     this->a_w__des = a_w__des;
     this->j_w__des = j_w__des;
     
-    return this->saturateLinear();
+    return 0; // this->saturateLinear(); // TODO
+    // TODO(rhester) why does saturateLinear set the desired to the current? is the error 0 at start due to my initial conditions? or is it because my desired is too large? note test cases in lee_control_phasing_test.cpp
 
     // TODO(mereweth) - sanitize inputs; return code
 }
@@ -474,7 +476,8 @@ int LeeControl::
     this->a_w__des = a_w__des;
     this->j_w__des = j_w__des;
     
-    return this->saturateLinear();
+    return 0; // this->saturateLinear(); // TODO
+    // TODO(rhester) why does saturateLinear set the desired to the current? is the error 0 at start due to my initial conditions? or is it because my desired is too large? note test cases in lee_control_phasing_test.cpp
 
     // TODO(mereweth) - sanitize inputs; return code
 }
@@ -489,7 +492,8 @@ int LeeControl::
     this->omega_b__des = omega_b__des;
 
     if (doSaturation) {
-        return this->saturateAngular(rpVelOnly, yawVelOnly);
+        return 0; // this->saturateAngular(rpVelOnly, yawVelOnly); // TODO
+        // TODO(rhester) why does saturateAngular set the desired to the current? is the error 0 at start due to my initial conditions? or is it because my desired is too large? note test cases in lee_control_phasing_test.cpp
     }
     else {
         return 0;
@@ -506,7 +510,8 @@ int LeeControl::
     this->omega_b__des = omega_b__des;
     this->alpha_b__des = alpha_b__des;
     
-    return this->saturateAngular();
+    return 0; // this->saturateAngular(); // TODO
+    // TODO(rhester) why does saturateAngular set the desired to the current? is the error 0 at start due to my initial conditions? or is it because my desired is too large? note test cases in lee_control_phasing_test.cpp
 
     // TODO(mereweth) - sanitize inputs; return code
 }
@@ -519,15 +524,50 @@ int LeeControl::
     this->v_w__des = v_w__des;
     this->alpha_b__des = alpha_b__des;
     
-    return this->saturateLinear();
+    return 0; // this->saturateLinear(); // TODO
+    // TODO(rhester) why does saturateLinear set the desired to the current? is the error 0 at start due to my initial conditions? or is it because my desired is too large? note test cases in lee_control_phasing_test.cpp
 
     // TODO(mereweth) - sanitize inputs; return code
+}
+
+int LeeControl::Getso3Error(Vector3* e_R, Vector3* e_omega,
+           bool rpVelOnly,
+           bool yawVelOnly) {
+    FW_ASSERT(e_R);
+    FW_ASSERT(e_omega);
+    const Matrix3 e_R__hat = 0.5 * (this->w_R_b.transpose()
+                                            * this->w_R_b__des
+                                            - this->w_R_b__des.transpose()
+                                            * this->w_R_b);
+    // TODO(mereweth) - return error code
+    vee3(e_R, e_R__hat);
+
+    if (rpVelOnly || yawVelOnly) {
+        *e_omega = this->omega_b__des - this->omega_b;
+    }
+    else {
+        *e_omega = this->w_R_b.transpose() * this->w_R_b__des
+                   * this->omega_b__des - this->omega_b;
+    }
+    
+    if (rpVelOnly) {
+        e_R->x() = 0;
+        e_R->y() = 0;
+    }
+    
+    if (yawVelOnly) {
+        e_R->z() = 0;
+    }
+
+    return 0;
 }
   
 // ----------------------------------------------------------------------
 // Private helper functions
 // ----------------------------------------------------------------------
   
+// made public
+
 void LeeControl::
   so3Error(Vector3* e_R, Vector3* e_omega,
            bool rpVelOnly,

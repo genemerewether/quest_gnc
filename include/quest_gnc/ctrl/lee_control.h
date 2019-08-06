@@ -49,13 +49,19 @@ class LeeControl {
   // Parameter, model, and gain *getters and* setters
   // ----------------------------------------------------------------------
 
+    // added
+
     int GetWorldParams(FloatingPoint* gravityMag, FloatingPoint* atmosphereDensity);
 
     int SetWorldParams(WorldParams wParams);
 
     int SetModel(MultirotorModel mrModel);
 
+    // added
+
     int GetModel(FloatingPoint* mass, Matrix3* inertia);
+
+    // added
 
     int GetGains(Vector3* k_x, Vector3* k_v, Vector3* k_R, Vector3* k_omega);
 
@@ -149,17 +155,16 @@ class LeeControl {
                                const Vector3& v_w__des,
                                const Vector3& alpha_b__des);
 
-    // TODO(mereweth) - factor out into utils?
-    // NOTE(mereweth) - uses, but does not modify, member variable
-    // NOTE(rhester) - moved from private to allow binding to python
-    void so3Error(Vector3* e_R, Vector3* e_omega,
-                  bool rpVelOnly = false, bool yawVelOnly = false);
+    // added
+    int Getso3Error(Vector3* e_R, Vector3* e_omega,
+           bool rpVelOnly,
+           bool yawVelOnly);
 
  private:
     // TODO(mereweth) - factor out into utils?
     // NOTE(mereweth) - uses, but does not modify, member variable
-    // void so3Error(Vector3* e_R, Vector3* e_omega,
-                  // bool rpVelOnly = false, bool yawVelOnly = false);
+    void so3Error(Vector3* e_R, Vector3* e_omega,
+                  bool rpVelOnly = false, bool yawVelOnly = false);
     
     int saturateAngular(bool rpVelOnly = false,
                         bool yawVelOnly = false); // NOTE(mereweth) - updates member variable

@@ -190,12 +190,12 @@ void lee_control_bind(py::module &m) { // NOLINT()
       })
 
       .def("SetAttitudeDes", [](LeeControl &lee, Eigen::Vector4d &w_q_b_vec, Vector3 &omega_b__des,
-                            bool rpVelOnly, bool yawVelOnly) 
+                            bool rpVelOnly, bool yawVelOnly, bool doSaturation) 
         { Quaternion w_q_b__des(w_q_b_vec(3),
             w_q_b_vec(0),
             w_q_b_vec(1),
             w_q_b_vec(2));
-          int r = lee.SetAttitudeDes(w_q_b__des, omega_b__des, rpVelOnly, yawVelOnly);
+          int r = lee.SetAttitudeDes(w_q_b__des, omega_b__des, rpVelOnly, yawVelOnly, doSaturation);
           return r;
       })
 
@@ -209,11 +209,13 @@ void lee_control_bind(py::module &m) { // NOLINT()
           return r;
       })
 
-// ----------------------------------------------------------------------
-// (formerly) Private helper functions
-// ----------------------------------------------------------------------
-      // added
-      .def("so3Error", &LeeControl::so3Error,
-            "e_R"_a, "e_omega"_a, "rpVelOnly"_a, "yawVelOnly"_a);
+      .def("Getso3Error", [](LeeControl &lee, bool rpVelOnly, bool yawVelOnly) 
+        { Vector3 e_R; Vector3 e_omega;
+          int r = lee.Getso3Error(&e_R, &e_omega, rpVelOnly, yawVelOnly);
+          return std::make_tuple(
+            e_R,
+            e_omega,
+            r);   
+      });
 
 }
