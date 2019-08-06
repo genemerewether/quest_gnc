@@ -169,7 +169,7 @@ int LeeControl::
     DEBUG_PRINT("sat_R [%f, %f, %f]\n",
                 this->sat_R(0), this->sat_R(1), this->sat_R(2));
     DEBUG_PRINT("sat_omega [%f, %f, %f]\n",
-                this->sat_omega(0), this->sat_omega(1), this->sat_omeg(*a_w__comm)(1));
+                this->sat_omega(0), this->sat_omega(1), this->sat_omega(2));
     return 0;
 }
 
@@ -621,7 +621,7 @@ int LeeControl::
     
     DEBUG_PRINT("omega [%f, %f, %f], sat_omega [%f, %f, %f]\n",
                 this->omega_b(0), this->omega_b(1), this->omega_b(2),
-                this->sat_omega(0), this->sat_omega(1), this->sat_omeg(*a_w__comm)(1));
+                this->sat_omega(0), this->sat_omega(1), this->sat_omega(2));
     DEBUG_PRINT("omega_des [%f, %f, %f]\n",
                 this->omega_b__des(0), this->omega_b__des(1), this->omega_b__des(2));
     this->omega_b__des = this->w_R_b__des.transpose() * this->w_R_b * (this->omega_b
