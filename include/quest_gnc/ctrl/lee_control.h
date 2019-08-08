@@ -74,6 +74,7 @@ class LeeControl {
     int GetAccelCommand(Vector3* a_w__comm, bool velOnly = false);
 
     int GetAngAccelCommand(Vector3* alpha_b__comm,
+                           Vector3* omega_b__comm = NULL,
                            bool rpVelOnly = false,
                            bool yawVelOnly = false);
 

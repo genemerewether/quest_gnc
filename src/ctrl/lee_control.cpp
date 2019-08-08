@@ -194,6 +194,7 @@ int LeeControl::
 
 int LeeControl::
   GetAngAccelCommand(Vector3* alpha_b__comm,
+                     Vector3* omega_b__comm,
                      bool rpVelOnly,
                      bool yawVelOnly) {
     FW_ASSERT(alpha_b__comm);
@@ -206,6 +207,10 @@ int LeeControl::
     *alpha_b__comm = e_R.cwiseProduct(this->k_R)
                      + e_omega.cwiseProduct(this->k_omega)
                      + this->omega_b.cross(this->inertia * this->omega_b);
+
+    if (NULL != omega_b__comm) {
+        *omega_b__comm = e_R.cwiseProduct(this->k_R) + this->omega_b__des;
+    }
 
     if (!rpVelOnly && !yawVelOnly) {
         Matrix3 omega_b__hat;
