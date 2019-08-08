@@ -275,7 +275,8 @@ int LeeControl::
     // this->omega_b__des(2) = y_b.transpose().dot(x_b_dot);
     
     // NOTE(mereweth) - commanded attitude is set above, so give error code if saturated
-    return 0; // this->saturateAngular(); // TODO
+    return 0;
+    // return this->saturateAngular();
 }
 
 int LeeControl::
@@ -430,8 +431,8 @@ int LeeControl::
     this->a_w__des = a_w__des;
     this->j_w__des = j_w__des;
     
-    return 0; // this->saturateLinear(); // TODO
-    // TODO(rhester) why does saturateLinear set the desired to the current? is the error 0 at start due to my initial conditions? or is it because my desired is too large? note test cases in lee_control_phasing_test.cpp
+    return 0;
+    // return this->saturateLinear();
 
     // TODO(mereweth) - sanitize inputs; return code
 }
@@ -476,8 +477,8 @@ int LeeControl::
     this->a_w__des = a_w__des;
     this->j_w__des = j_w__des;
     
-    return 0; // this->saturateLinear(); // TODO
-    // TODO(rhester) why does saturateLinear set the desired to the current? is the error 0 at start due to my initial conditions? or is it because my desired is too large? note test cases in lee_control_phasing_test.cpp
+    return 0;
+    // return this->saturateLinear();
 
     // TODO(mereweth) - sanitize inputs; return code
 }
@@ -492,8 +493,8 @@ int LeeControl::
     this->omega_b__des = omega_b__des;
 
     if (doSaturation) {
-        return 0; // this->saturateAngular(rpVelOnly, yawVelOnly); // TODO
-        // TODO(rhester) why does saturateAngular set the desired to the current? is the error 0 at start due to my initial conditions? or is it because my desired is too large? note test cases in lee_control_phasing_test.cpp
+        return 0;
+        // return this->saturateAngular(rpVelOnly, yawVelOnly);
     }
     else {
         return 0;
@@ -510,8 +511,8 @@ int LeeControl::
     this->omega_b__des = omega_b__des;
     this->alpha_b__des = alpha_b__des;
     
-    return 0; // this->saturateAngular(); // TODO
-    // TODO(rhester) why does saturateAngular set the desired to the current? is the error 0 at start due to my initial conditions? or is it because my desired is too large? note test cases in lee_control_phasing_test.cpp
+    return 0;
+    // return this->saturateAngular(); 
 
     // TODO(mereweth) - sanitize inputs; return code
 }
@@ -524,8 +525,8 @@ int LeeControl::
     this->v_w__des = v_w__des;
     this->alpha_b__des = alpha_b__des;
     
-    return 0; // this->saturateLinear(); // TODO
-    // TODO(rhester) why does saturateLinear set the desired to the current? is the error 0 at start due to my initial conditions? or is it because my desired is too large? note test cases in lee_control_phasing_test.cpp
+    return 0;
+    // return this->saturateLinear(); 
 
     // TODO(mereweth) - sanitize inputs; return code
 }
