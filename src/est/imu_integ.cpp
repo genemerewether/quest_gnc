@@ -142,7 +142,9 @@ int ImuInteg::
     // TODO(mereweth) - check for state update after most recent IMU sample?
     // should only be possible in case of bad clock sync
     
-    this->tLast = this->imuBuf.getFirstIn()->t;
+    if (this->imuBuf.size()) {
+        this->tLast = this->imuBuf.getFirstIn()->t;
+    }
 
     this->tLastUpdate = tValid;
     this->tLastIntegrated = tValid;
